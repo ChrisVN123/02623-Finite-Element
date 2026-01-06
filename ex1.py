@@ -1,11 +1,15 @@
 import numpy as np
+import numba as nb
 import matplotlib.pyplot as plt
-from scipy.sparse import lil_matrix
+from scipy.sparse import lil_matrix, diags
 from scipy.sparse.linalg import spsolve
+import time
 
 L = 2.0
 c = 1.0
 d_bc = np.exp(2)
+
+
 
 def create_A(h_e):
     ne = len(h_e)
@@ -27,6 +31,7 @@ def create_A(h_e):
 
     return A.tocsr()
 
+
 def create_b(n_nodes):
     return np.zeros(n_nodes, dtype=float)
 
@@ -34,13 +39,13 @@ def gaussian_solve(A, b, left_bc, right_bc):
     n_nodes = A.shape[0]
     interior = np.arange(1, n_nodes - 1)
 
+    # we now remove the columns and rows related to u_1 and u_N
     A_ii = A[interior][:, interior]
     b_i = b[interior].copy()
 
     # Dirichlet elimination
     b_i -= A[interior, 0].toarray().ravel()  * left_bc
     b_i -= A[interior, -1].toarray().ravel() * right_bc
-
     u_i = spsolve(A_ii, b_i)
 
     u = np.zeros(n_nodes, dtype=float)
@@ -49,67 +54,41 @@ def gaussian_solve(A, b, left_bc, right_bc):
     u[interior] = u_i
     return u
 
-def solve(ne):
-    h_e = np.full(ne, L / ne, dtype=float)
+def solve(ne, h=None):
+    t0 = time.time()
+    # create list of uniform interval lengths
+    if h == None: h_e = np.full(ne, L / ne, dtype=float)
+    else: 
+        h_e = h
+    # create list of x_values for plotting which is the accumulated sum of h_e
     x = np.r_[0.0, np.cumsum(h_e)]
     x[-1] = L  # ensure exact endpoint
 
     A = create_A(h_e)
     b = create_b(ne + 1)
+
     u = gaussian_solve(A, b, c, d_bc)
-    return u, x
-
-def N_hat(x, i, nodes):
-    nodes = np.asarray(nodes, dtype=float)
-    x_arr = np.asarray(x, dtype=float)
-    M = len(nodes)
-
-    if i < 0 or i >= M:
-        raise ValueError("i out of range")
-    if M < 2:
-        raise ValueError("Need at least 2 nodes")
-
-    if i == 0:
-        x0, x1 = nodes[0], nodes[1]
-        h = x1 - x0
-        val = np.where((x_arr >= x0) & (x_arr <= x1), (x1 - x_arr) / h, 0.0)
-
-    elif i == M - 1:
-        x0, x1 = nodes[M - 2], nodes[M - 1]
-        h = x1 - x0
-        val = np.where((x_arr >= x0) & (x_arr <= x1), (x_arr - x0) / h, 0.0)
-
-    else:
-        xL, xC, xR = nodes[i - 1], nodes[i], nodes[i + 1]
-        hL = xC - xL
-        hR = xR - xC
-
-        left  = np.where((x_arr >= xL) & (x_arr <= xC), (x_arr - xL) / hL, 0.0)
-        right = np.where((x_arr >= xC) & (x_arr <= xR), (xR - x_arr) / hR, 0.0)
-        val = left + right
-
-    return float(val) if np.isscalar(x) else val
-
-def u_fem_global_sum_exp(xq, nodes):
-    """
-    Interpolant of exp(x) on the mesh given by `nodes`:
-      u_h(x) = sum_i exp(x_i) * N_i(x)
-    """
-    nodes = np.asarray(nodes, dtype=float)
-    coeffs = np.exp(nodes)
-
-    xq_arr = np.asarray(xq, dtype=float)
-    uh = np.zeros_like(xq_arr, dtype=float)
-
-    for i in range(len(nodes)):
-        uh += coeffs[i] * N_hat(xq_arr, i, nodes)
-
-    return float(uh) if np.isscalar(xq) else uh
+    t1 = time.time()
+    return u, x, t1-t0
 
 # ---- run ----
-u_pde, x_nodes = solve(4)
+
+u_pde, x_nodes, time_g = solve(5)
 print("PDE FEM nodal u:", u_pde)
 print("nodes:", x_nodes)
+print("Time spent:", time_g)
+
+exit()
+# testing runtime across iterations
+n = 2000
+runtime = np.zeros(n)
+for i in range(n):
+    _, _, time_g = solve(i+3)
+    runtime[i]=time_g
+xf = np.linspace(0, n, n)
+plt.plot(xf,runtime)
+plt.show()
+
 
 # exact exp(x) for comparison with the interpolant
 xf = np.linspace(0, L, 400)
@@ -119,18 +98,17 @@ exp_exact = np.exp(xf)
 uh_vals = u_fem_global_sum_exp(xf, x_nodes)
 
 # plot
-# plt.figure()
-# plt.plot(x_nodes, u_pde, marker="o", label="FEM solution of PDE (nodal)")
-# plt.plot(xf, exp_exact, label="exp(x) exact")
-# plt.plot(xf, uh_vals, "--", label="exp(x) interpolated on mesh")
-# plt.xlabel("x")
-# plt.ylabel("u(x)")
-# plt.grid(True)
-# plt.legend()
-# plt.show()
+plt.figure()
+plt.plot(x_nodes, u_pde, marker="o", label="FEM solution of PDE (nodal)")
+plt.plot(xf, exp_exact, label="exp(x) exact")
+plt.plot(xf, uh_vals, "--", label="exp(x) interpolated on mesh")
+plt.xlabel("x")
+plt.ylabel("u(x)")
+plt.grid(True)
+plt.legend()
+plt.show()
 
-# print("u_pde =", u_pde)
-
+exit()
 alpha = (d_bc - c*np.exp(-L)) / (np.exp(L) - np.exp(-L))
 beta  = c - alpha
 
@@ -147,16 +125,13 @@ for k, ne in enumerate(ne_values):
     e = u_num - u_ex
 
     err_L2[k] = np.sqrt(np.mean(e**2))
-    err_Linf[k] = np.max(np.abs(e))
 
 p_L2 = np.polyfit(np.log(h_values), np.log(err_L2), 1)[0]
 
-print(f"Estimated convergence rate (RMS/L2):   p ≈ {p_L2:.3f}")
+print(f"Estimated convergence rate (RMS/L2): {p_L2:.3f}")
 
 plt.figure()
 plt.loglog(h_values, err_L2, marker="o", label="RMS (discrete L2) error")
-plt.loglog(h_values, err_Linf, marker="o", label="Max (L∞) error")
-plt.gca().invert_xaxis()  
 plt.xlabel("h = L/ne")
 plt.ylabel("error")
 plt.grid(True, which="both")
