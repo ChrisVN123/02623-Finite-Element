@@ -72,68 +72,67 @@ def solve(ne, h=None):
     return u, x, t1-t0
 
 # ---- run ----
-
-u_pde, x_nodes, time_g = solve(5)
+u_pde, x_nodes, time_g = solve(10)
 print("PDE FEM nodal u:", u_pde)
 print("nodes:", x_nodes)
 print("Time spent:", time_g)
 
-exit()
-# testing runtime across iterations
-n = 2000
-runtime = np.zeros(n)
-for i in range(n):
-    _, _, time_g = solve(i+3)
-    runtime[i]=time_g
-xf = np.linspace(0, n, n)
-plt.plot(xf,runtime)
-plt.show()
+
+# # testing runtime across iterations
+# n = 2000
+# runtime = np.zeros(n)
+# for i in range(n):
+#     _, _, time_g = solve(i+3)
+#     runtime[i]=time_g
+# xf = np.linspace(0, n, n)
+# plt.plot(xf,runtime)
+# plt.show()
 
 
 # exact exp(x) for comparison with the interpolant
-xf = np.linspace(0, L, 400)
-exp_exact = np.exp(xf)
+# xf = np.linspace(0, L, 400)
+# exp_exact = np.exp(xf)
 
-# interpolated exp(x) using basis on the FEM mesh x_nodes
-uh_vals = u_fem_global_sum_exp(xf, x_nodes)
+# # interpolated exp(x) using basis on the FEM mesh x_nodes
+# uh_vals = u_fem_global_sum_exp(xf, x_nodes)
 
 # plot
-plt.figure()
-plt.plot(x_nodes, u_pde, marker="o", label="FEM solution of PDE (nodal)")
-plt.plot(xf, exp_exact, label="exp(x) exact")
-plt.plot(xf, uh_vals, "--", label="exp(x) interpolated on mesh")
-plt.xlabel("x")
-plt.ylabel("u(x)")
-plt.grid(True)
-plt.legend()
-plt.show()
+# plt.figure()
+# plt.plot(x_nodes, u_pde, marker="o", label="FEM solution of PDE (nodal)")
+# plt.plot(xf, exp_exact, label="exp(x) exact")
+# plt.plot(xf, uh_vals, "--", label="exp(x) interpolated on mesh")
+# plt.xlabel("x")
+# plt.ylabel("u(x)")
+# plt.grid(True)
+# plt.legend()
+# plt.show()
 
-exit()
-alpha = (d_bc - c*np.exp(-L)) / (np.exp(L) - np.exp(-L))
-beta  = c - alpha
 
-ne_values = np.arange(2, 1000)
-h_values  = L / ne_values    
+# alpha = (d_bc - c*np.exp(-L)) / (np.exp(L) - np.exp(-L))
+# beta  = c - alpha
 
-err_L2 = np.zeros_like(ne_values, dtype=float)
-err_Linf = np.zeros_like(ne_values, dtype=float)
+# ne_values = np.arange(2, 1000)
+# h_values  = L / ne_values    
 
-for k, ne in enumerate(ne_values):
-    u_num, x_nodes = solve(ne)  
+# err_L2 = np.zeros_like(ne_values, dtype=float)
+# err_Linf = np.zeros_like(ne_values, dtype=float)
 
-    u_ex = np.exp(x_nodes)
-    e = u_num - u_ex
+# for k, ne in enumerate(ne_values):
+#     u_num, x_nodes, _ = solve(ne)  
 
-    err_L2[k] = np.sqrt(np.mean(e**2))
+#     u_ex = np.exp(x_nodes)
+#     e = u_num - u_ex
 
-p_L2 = np.polyfit(np.log(h_values), np.log(err_L2), 1)[0]
+#     err_L2[k] = np.sqrt(np.mean(e**2))
 
-print(f"Estimated convergence rate (RMS/L2): {p_L2:.3f}")
+# p_L2 = np.polyfit(np.log(h_values), np.log(err_L2), 1)[0]
 
-plt.figure()
-plt.loglog(h_values, err_L2, marker="o", label="RMS (discrete L2) error")
-plt.xlabel("h = L/ne")
-plt.ylabel("error")
-plt.grid(True, which="both")
-plt.legend()
-plt.show()
+# print(f"Estimated convergence rate (RMS/L2): {p_L2:.3f}")
+
+# plt.figure()
+# plt.loglog(h_values, err_L2, marker="o", label="RMS (discrete L2) error")
+# plt.xlabel("h = L/ne")
+# plt.ylabel("error")
+# plt.grid(True, which="both")
+# plt.legend()
+# plt.savefig('convergence_plot_ex1')

@@ -7,14 +7,10 @@ import time
 
 L = 1.0
 p = 1
-eps = 0.0001
+eps = 0.01
 start_bc = 0
 end_bc = 0
 f = 1
-
-
-
-
 
 def create_A(h_e):
     ne = len(h_e)
@@ -79,7 +75,7 @@ def solve(ne, xn, bc0, bcn, h=None):
 
 # ---- run ----
 
-u_pde, x_nodes, time_g = solve(1000, xn=L, bc0=start_bc, bcn=end_bc)
+u_pde, x_nodes, time_g = solve(5000, xn=L, bc0=start_bc, bcn=end_bc)
 print("PDE FEM nodal u:", u_pde)
 print("nodes:", x_nodes)
 print("Time spent:", time_g)
@@ -102,7 +98,7 @@ plt.xlabel("x")
 plt.ylabel("u(x)")
 plt.grid(True)
 plt.legend()
-plt.show()
+plt.savefig('plotof')
 
 exit()
 alpha = (d_bc - c*np.exp(-L)) / (np.exp(L) - np.exp(-L))
