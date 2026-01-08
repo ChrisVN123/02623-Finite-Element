@@ -82,13 +82,13 @@ savefig("exercise_1_2_a_jl.png")
 # b) 
 print("b)\n")
 function BVP1D_b(L, c, d, M)
-    h = L / M 
+    h = L / (M - 1) 
     k11 = 1 / h + h / 3 
     k12 = -1 / h + h / 6
-    
+
     # Algorithm 1
-    rows = Int.(zeros(4 * M))
-    cols = Int.(zeros(4 * M))
+    rows = Int.(ones(4 * M))
+    cols = Int.(ones(4 * M))
     vals = zeros(4 * M)
     b = zeros(M)
     
@@ -193,8 +193,8 @@ function error_calculation(M)
     return error 
 end 
 
-M_arr = 2_000:100:5_000
-h_arr = L ./ M_arr 
+M_arr = 5000:100:10_000
+h_arr = L ./ (M_arr .- 1) 
 error_arr = error_calculation.(M_arr)
 
 plot(h_arr, error_arr)

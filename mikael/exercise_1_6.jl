@@ -101,21 +101,24 @@ delta_err_i = 10^-4
 function calc()
     idxMarked = [1, 1]
     xfine = copy(xcoarse_initial)
-    while sum(idxMarked) != 0
+    count = 0 
+    while sum(idxMarked) != 0 && count < 500
         idxMarked = Int.(
             compute_error_decrease("", xfine, "") .> delta_err_i
         )
         _, xfine = refine_marked("", xfine, idxMarked)
+        count += 1
     end 
 
-    return xfine
+    return xfine, count
 end 
 
 calc()
 print("calc timing: \n")
 @time calc()
-xfine = calc()
+xfine, count = calc()
 print("length(xfine) = $(length(xfine))\n")
+print("count = $count\n")
 
 # d) 
 print("d)\n")
