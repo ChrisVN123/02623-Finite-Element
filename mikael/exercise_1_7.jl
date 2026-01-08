@@ -3,7 +3,7 @@ using BenchmarkTools
 using LinearAlgebra
 using SparseArrays
 using Random
-using Polynomials
+# using Polynomials
 # functions
 
 #from 1.2
@@ -181,27 +181,63 @@ EToVf = [[1,2],[2,3],[3,4],[4,5]]   # not used!
 # b) 
 print("b)\n")
 
-function errorestimate(xc,xf,uhc,uhf,EToVc, EToVf, Old2New)
+function errorestimate_harh(xc,xf,uhc,uhf,EToVc, EToVf, Old2New)
     num = 1_000
     xs = LinRange(0,1,num)
     u_c_xs = u_hat.(xs,[uhc],[xc])
     u_f_xs = u_hat.(xs,[uhf],[xf])
     error_est = ((u_c_xs .- u_f_xs).^(2))
 
-    xs_index = xc * num #[0,500,1000]
+    xs_index = Int.(xc * num).+1 #[0,500,1000]
     errors_elementwise = []
-    for i in xs_index
-        element_error = sum(error_est[xs_index[i]:xs_index[i+1]]).^(0.5)
+    for i in 1:(length(xs_index)-1)
+        element_error = sum(error_est[xs_index[i]:xs_index[i+1]-1]).^(0.5)
         errors_elementwise = [errors_elementwise; element_error]
+    end 
     return errors_elementwise
 end
 
-function error_estimate(xc, xf, uhc, uhf, EToV, EToVf, Old2New)
-    
+function create_mapping_coarse_fine(xc, xf)
+    res = []
+    for x in xc, (j, y) in enumerate(xf)
+        if x == y 
+            res = [res; j]
+        end 
+    end 
+    return res 
 end 
 
-error_estimate = errorestimate(xc,xf,uhc,uhf,"","","")
-print(error_estimate)
+function error_estimate(xc, xf, uhc, uhf, EToV, EToVf, Old2New)
+    num = 1000 # find better way! 
+    err_arr = []
+    for (i, (x_i, x_ip1)) in enumerate(zip(xc[1:end-1], xf[2:end]))
+        idx_l, idx_u = Old2New[i], Old2New[i+1]
+        x_arr_arr = []
+        uhf_arr_arr = []
+        for j in idx_l:(idx_u - 1)
+            x_arr = LinRange(xf[j], xf[j+1], 1_000)
+            uhf_arr = u_hat.(x_arr, [uhf], [xf])
+            x_arr_arr = [x_arr_arr; x_arr]
+            uhf_arr_arr = [uhf_arr_arr; uhf_arr]
+        end 
+
+        uhc_arr_arr = u_hat.(x_arr_arr, [uhc], [xc])
+        err = sqrt(sum(
+            (uhc_arr_arr .- uhf_arr_arr).^2)
+        )
+        err_arr = [err_arr; err]
+    end 
+
+    return err_arr
+end 
+
+print(
+    error_estimate(xc, xf, uhc, uhf, "", "", create_mapping_coarse_fine(xc, xf))
+)
+print("\n")
+
+error = errorestimate_harh(xc,xf,uhc,uhf,"","","")
+print(error)
 
 #c)
 function refine_marked(EToVcoarse, xcoarse, idxMarked)
@@ -221,3 +257,5 @@ function refine_marked(EToVcoarse, xcoarse, idxMarked)
 
     return EToVfine, xfine
 end 
+
+# d) 
