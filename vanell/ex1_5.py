@@ -104,17 +104,9 @@ plt.show()
 
 def function(x, phi, eps):
     return 1/phi*((1+(np.exp(phi/eps)-1))*x-np.exp(x*phi/eps))/(np.exp(phi/eps)-1)
-    #return 1/phi*(((1+(np.exp(phi/eps)-1))*x-np.exp(x*phi/eps))*np.exp(-phi/eps))/((np.exp(phi/eps)-1)*np.exp(-phi/eps))
-
-x_ran = np.linspace(0,1,1000)
-print(x_ran)
-plt.plot(x_ran,function(x_ran,1,0.0001),label=f'eps={0.0001}')
-plt.plot(x_ran,function(x_ran,1,0.01),label=f'eps={0.01}')
-plt.plot(x_ran,function(x_ran,1,1),label=f'eps={1}')
-plt.legend()
-plt.show()
 
 n = 100
+eps_list = [0.01]
 error_con = np.zeros(n)
 for e in eps_list:
     for i in range(3,n):
@@ -132,14 +124,19 @@ plt.show()
 
 
 # plot
+u4, x4, _ = solve(20000, xn=L, bc0=start_bc, bcn=end_bc, eps=1)
+u3, x3, _ = solve(20000,  xn=L, bc0=start_bc, bcn=end_bc, eps=0.01)
+u2, x2, _ = solve(20000,   xn=L, bc0=start_bc, bcn=end_bc, eps=0.0001)
+
 plt.figure()
-plt.plot(x_nodes, u_pde, marker="o", label="FEM solution of PDE (nodal)")
-plt.plot(x_nodes,function(x_nodes,1,0.01))
+plt.plot(x4,u4,label="eps=1")
+plt.plot(x3,u3, label="eps=0.01")
+plt.plot(x2,u2, label="eps=0.0001")
 plt.xlabel("x")
 plt.ylabel("u(x)")
 plt.grid(True)
 plt.legend()
-plt.savefig('plotof')
+plt.savefig('plotofdifferent eps')
 
 exit()
 alpha = (d_bc - c*np.exp(-L)) / (np.exp(L) - np.exp(-L))
