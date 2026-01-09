@@ -7,12 +7,12 @@ import time
 
 L = 1.0
 p = 1
-eps = 0.01
+epsilon = 0.01
 start_bc = 0
 end_bc = 0
 f = 1
 
-def create_A(h_e):
+def create_A(h_e,eps):
     ne = len(h_e)
     n_nodes = ne + 1
     A = lil_matrix((n_nodes, n_nodes), dtype=float)
@@ -56,7 +56,7 @@ def gaussian_solve(A, b, left_bc, right_bc, h):
     u[interior] = u_i
     return u
 
-def solve(ne, xn, bc0, bcn, h=None):
+def solve(ne, xn, bc0, bcn, eps, h=None):
     t0 = time.time()
     # create list of uniform interval lengths
     if h == None: h_e = np.full(ne, xn / ne, dtype=float)
@@ -66,7 +66,7 @@ def solve(ne, xn, bc0, bcn, h=None):
     x = np.r_[0.0, np.cumsum(h_e)]
     x[-1] = xn  # ensure exact endpoint
 
-    A = create_A(h_e)
+    A = create_A(h_e,eps)
     b = create_b(ne + 1)
 
     u = gaussian_solve(A, b, bc0, bcn, h_e[0])
@@ -75,25 +75,66 @@ def solve(ne, xn, bc0, bcn, h=None):
 
 # ---- run ----
 
-u_pde, x_nodes, time_g = solve(5000, xn=L, bc0=start_bc, bcn=end_bc)
+u_pde, x_nodes, time_g = solve(5000, xn=L, bc0=start_bc, bcn=end_bc, eps=epsilon)
 print("PDE FEM nodal u:", u_pde)
 print("nodes:", x_nodes)
 print("Time spent:", time_g)
 
-# # testing runtime across iterations
-# n = 2000
-# runtime = np.zeros(n)
-# for i in range(n):
-#     _, _, time_g = solve(i+3)
-#     runtime[i]=time_g
-# xf = np.linspace(0, n, n)
-# plt.plot(xf,runtime)
-# plt.show()
+
+### d) 
+
+
+u4, x4, _ = solve(1000, xn=L, bc0=start_bc, bcn=end_bc, eps=0.001)
+u3, x3, _ = solve(100,  xn=L, bc0=start_bc, bcn=end_bc, eps=0.001)
+u2, x2, _ = solve(50,   xn=L, bc0=start_bc, bcn=end_bc, eps=0.001)
+
+plt.plot(x4, u4, label='ne=1000')
+plt.plot(x3, u3, label='ne=100')
+plt.plot(x2, u2, label='ne=50')
+plt.legend()
+plt.title('Approximating the solution using variable number of nodes')
+plt.xlabel('x')
+plt.ylabel('u(x)')
+plt.xlim(0, 1)
+plt.grid(True, alpha=0.3)
+plt.show()
+
+
+# ## e) 
+
+def function(x, phi, eps):
+    return 1/phi*((1+(np.exp(phi/eps)-1))*x-np.exp(x*phi/eps))/(np.exp(phi/eps)-1)
+    #return 1/phi*(((1+(np.exp(phi/eps)-1))*x-np.exp(x*phi/eps))*np.exp(-phi/eps))/((np.exp(phi/eps)-1)*np.exp(-phi/eps))
+
+x_ran = np.linspace(0,1,1000)
+print(x_ran)
+plt.plot(x_ran,function(x_ran,1,0.0001),label=f'eps={0.0001}')
+plt.plot(x_ran,function(x_ran,1,0.01),label=f'eps={0.01}')
+plt.plot(x_ran,function(x_ran,1,1),label=f'eps={1}')
+plt.legend()
+plt.show()
+
+n = 100
+error_con = np.zeros(n)
+for e in eps_list:
+    for i in range(3,n):
+        u_fem,x_fem,_ = solve(i,xn=L, bc0=start_bc, bcn=end_bc, eps=e)
+        u_func = function(x_fem,1,e)
+        error_con[i] = np.max(np.abs(u_fem-u_func))
+    plt.plot(error_con, label=f"eps={e:g}")
+#plt.plot(error_con)
+plt.title('Error analytical solution and FEM approximation')
+plt.xlabel('Number of nodes')
+plt.ylabel('Error')
+plt.xlim(3,n)
+plt.show()
+
 
 
 # plot
 plt.figure()
 plt.plot(x_nodes, u_pde, marker="o", label="FEM solution of PDE (nodal)")
+plt.plot(x_nodes,function(x_nodes,1,0.01))
 plt.xlabel("x")
 plt.ylabel("u(x)")
 plt.grid(True)
