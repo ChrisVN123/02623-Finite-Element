@@ -1,5 +1,4 @@
 import numpy as np
-import numba as nb
 import matplotlib.pyplot as plt
 from scipy.sparse import lil_matrix, diags
 from scipy.sparse.linalg import spsolve
@@ -45,7 +44,6 @@ def gaussian_solve(A, b, left_bc, right_bc, h):
     A_ii = A[interior][:, interior]
     b_i = b[interior].copy() + h
 
-    # Dirichlet elimination
     b_i -= A[interior, 0].toarray().ravel()  * left_bc
     b_i -= A[interior, -1].toarray().ravel() * right_bc
     u_i = spsolve(A_ii, b_i)
@@ -58,13 +56,11 @@ def gaussian_solve(A, b, left_bc, right_bc, h):
 
 def solve(ne, xn, bc0, bcn, eps, h=None):
     t0 = time.time()
-    # create list of uniform interval lengths
     if h == None: h_e = np.full(ne, xn / ne, dtype=float)
     else: 
         h_e = h
-    # create list of x_values for plotting which is the accumulated sum of h_e
     x = np.r_[0.0, np.cumsum(h_e)]
-    x[-1] = xn  # ensure exact endpoint
+    x[-1] = xn  
 
     A = create_A(h_e,eps)
     b = create_b(ne + 1)
@@ -82,7 +78,6 @@ print("Time spent:", time_g)
 
 
 ### d) 
-
 
 u4, x4, _ = solve(1000, xn=L, bc0=start_bc, bcn=end_bc, eps=0.001)
 u3, x3, _ = solve(100,  xn=L, bc0=start_bc, bcn=end_bc, eps=0.001)
@@ -135,35 +130,5 @@ plt.plot(x2,u2, label="eps=0.0001")
 plt.xlabel("x")
 plt.ylabel("u(x)")
 plt.grid(True)
-plt.legend()
-plt.savefig('plotofdifferent eps')
-
-exit()
-alpha = (d_bc - c*np.exp(-L)) / (np.exp(L) - np.exp(-L))
-beta  = c - alpha
-
-ne_values = np.arange(2, 1000)
-h_values  = L / ne_values    
-
-err_L2 = np.zeros_like(ne_values, dtype=float)
-err_Linf = np.zeros_like(ne_values, dtype=float)
-
-for k, ne in enumerate(ne_values):
-    u_num, x_nodes = solve(ne)  
-
-    u_ex = np.exp(x_nodes)
-    e = u_num - u_ex
-
-    err_L2[k] = np.sqrt(np.mean(e**2))
-
-p_L2 = np.polyfit(np.log(h_values), np.log(err_L2), 1)[0]
-
-print(f"Estimated convergence rate (RMS/L2): {p_L2:.3f}")
-
-plt.figure()
-plt.loglog(h_values, err_L2, marker="o", label="RMS (discrete L2) error")
-plt.xlabel("h = L/ne")
-plt.ylabel("error")
-plt.grid(True, which="both")
 plt.legend()
 plt.show()

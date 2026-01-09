@@ -289,20 +289,30 @@ function calc2(L, c, d, xc)
     idxMarked = Int.(idxMarked)
     max_N = 1_000
     k = 0
-    xf = 0 
+    xf = zeros(M)
 
     x_arr = LinRange(0, 1, 2_000)
     h_arr = []
     err_arr = []
 
+    # while k <= 50
     while sum(idxMarked) != 0 && k <= max_N
-        print("$k, $idxMarked\n")
+        print("k = $k\n")
         _, xf = refine_marked("", xc, idxMarked)
 
         _, _, uhc = BVP1Drhs(L, c, d, xc, f)
         _, _, uhf = BVP1Drhs(L, c, d, xf, f)
         error_est = error_estimate_working(xc, xf, uhc, uhf) 
-        print("$(length(xc)), $(length(xf))\n")
+
+        new_error_est = []
+        Old2New = create_mapping_coarse_fine(xc, xf)
+        for (i, (x_i, x_ip1)) in enumerate(zip(xc[1:end-1], xc[2:end]))
+            idx_lower, idx_upper = Old2New[i], Old2New[i+1]
+            for j in idx_lower:(idx_upper-1)
+                new_error_est = [new_error_est; error_est[i]]
+            end 
+        end
+        error_est = new_error_est
 
         #############################################################
         ################# ONLY USED FOR CONVERGENCE #################
