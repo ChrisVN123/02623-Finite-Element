@@ -19,7 +19,7 @@ maxit = 50
 
 # Let's call the FEM BVP 1D Solver with AMR
 # time the code using time
-fac = 3 # we do multiple runs to get the average time
+fac = 100 # we do multiple runs to get the average time
 start_time = time()
 
 xAMR = 0

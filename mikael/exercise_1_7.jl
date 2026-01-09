@@ -368,3 +368,5 @@ print("fit: $(fit(log.(h_arr), log.(err_arr), 1))\n")
 
 histogram(xf)
 savefig("exercise_1_7_histogram.png")
+
+# Some plots
