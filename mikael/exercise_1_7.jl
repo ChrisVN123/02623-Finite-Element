@@ -217,7 +217,7 @@ end
 #     return b 
 # end 
 
-function create_b(M, x)
+function create_b_riemann(M, x)
     h_list = x[2:end] - x[1:end-1]
 
     d = 150
@@ -245,7 +245,7 @@ function BVP1Drhs(L, c, d, x, func)
     vals = zeros(4 * M)
     # f_list = f.(x)
     # b = -create_b(f_list, x)
-    b = -create_b(M, x)
+    b = -create_b_riemann(M, x)
     
     count = 0
     for i in 1:(M-1)
@@ -304,8 +304,8 @@ function calc2(L, c, d, xc)
         error_est = error_estimate_working(xc, xf, uhc, uhf) 
         print("$(length(xc)), $(length(xf))\n")
 
-        ##############################################################
-        ################# ONLY USED FOR CONVERGENCE ##################
+        #############################################################
+        ################# ONLY USED FOR CONVERGENCE #################
         # error bounds a la 1.7 
         err = maximum(abs.(
             u.(x_arr) - u_hat.(x_arr, [uhf], [xf])
@@ -313,7 +313,7 @@ function calc2(L, c, d, xc)
         h = maximum(xf[2:end] - xf[1:end-1])
         h_arr = [h_arr; h]
         err_arr = [err_arr; err]
-        ##############################################################
+        #############################################################
 
         idxMarked = Int.(error_est .> Δerr_i)
         xc = copy(xf)
@@ -334,19 +334,13 @@ k, xf, h_arr, err_arr = calc2(L, c, d, xc)
 _, _, u_fine = BVP1Drhs(L, c, d, xf, f)
 
 x_arr = LinRange(0, 1, 1_000)
-# x_arr = []
-# for (x_i, x_ip1) in zip(xf[1:end-1], xf[2:end])
-#     # print("$x_i, $x_ip1\n")
-#     # x_arr = [x_arr; LinRange(x_i, x_ip1, 1_000)]
-#     append!(x_arr, LinRange(x_i, x_ip1, 3))
-# end 
 u_arr = u.(x_arr)
 u_fine_arr = u_hat.(x_arr, [u_fine], [xf])
 
 plot(x_arr, u_fine_arr, label="u_hat", title="u vs u_hat")
 plot!(x_arr, u_arr, label="u")
 xlims!(0, 1)
-# ylims!(-12, 1)
+ylims!(0, 1)
 
 savefig("exercise_1_7_e_u_hat_xf.png")
 
