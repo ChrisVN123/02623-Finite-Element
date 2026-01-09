@@ -122,7 +122,6 @@ function u(x)
 end 
 
 # a) 
-## from maple, CHECK 
 c = exp(-128) + 1 / 4 * exp(-128 / 5)
 d = exp(-288) + exp(-8 / 5)/4
 L = 1
@@ -140,24 +139,6 @@ EToVf = [[1,2],[2,3],[3,4],[4,5]]   # not used!
 
 # b) 
 print("b)\n")
-
-function errorestimate_harh(xc,xf,uhc,uhf,EToVc, EToVf, Old2New)
-    num = 1_000
-    xs = LinRange(0,1,num)
-    u_c_xs = u_hat.(xs,[uhc],[xc])
-    u_f_xs = u_hat.(xs,[uhf],[xf])
-    error_est = ((u_c_xs .- u_f_xs).^(2))
-
-    # xs_index = Int.(round(xc * num)).+1 #[0,500,1000]
-    xs_index = trunc.([Int], xc * num).+1
-    errors_elementwise = []
-    for i in 1:(length(xs_index)-1)
-        element_error = sum(error_est[xs_index[i]:xs_index[i+1]-1]).^(0.5)
-        errors_elementwise = [errors_elementwise; element_error]
-    end 
-    return errors_elementwise
-end
-
 function create_mapping_coarse_fine(xc, xf)
     res = []
     for x in xc, (j, y) in enumerate(xf)
@@ -168,40 +149,40 @@ function create_mapping_coarse_fine(xc, xf)
     return res 
 end 
 
-function error_estimate(xc, xf, uhc, uhf, EToV, EToVf, Old2New)
-    num = 1000 # find better way! 
+function error_estimate_working(xc, xf, uhc, uhf)
+    Old2New = create_mapping_coarse_fine(xc, xf)
+
     err_arr = []
-    for (i, (x_i, x_ip1)) in enumerate(zip(xc[1:end-1], xf[2:end]))
-        idx_l, idx_u = Old2New[i], Old2New[i+1]
+    for (i, (x_i, x_ip1)) in enumerate(zip(xc[1:end-1], xc[2:end]))
         x_arr_arr = []
         uhf_arr_arr = []
-        for j in idx_l:(idx_u - 1)
-            x_arr = LinRange(xf[j], xf[j+1], 1_000)
+        
+        idx_lower, idx_upper = Old2New[i], Old2New[i+1]
+        x_lower = x_i 
+        for j in idx_lower:(idx_upper-1) 
+            x_upper = xf[j+1]
+            x_arr = LinRange(x_lower, x_upper, 1_000)
             uhf_arr = u_hat.(x_arr, [uhf], [xf])
+
             x_arr_arr = [x_arr_arr; x_arr]
             uhf_arr_arr = [uhf_arr_arr; uhf_arr]
+
+            x_lower = x_upper
         end 
 
         uhc_arr_arr = u_hat.(x_arr_arr, [uhc], [xc])
+        h = (x_ip1 - x_i) / length(x_arr_arr) # approximation! 
         err = sqrt(sum(
-            (uhc_arr_arr .- uhf_arr_arr).^2)
-        )
+            (uhc_arr_arr .- uhf_arr_arr).^2 * h 
+        ))
         err_arr = [err_arr; err]
-    end 
+    end
 
     return err_arr
-end 
-
-print(
-    error_estimate(xc, xf, uhc, uhf, "", "", create_mapping_coarse_fine(xc, xf))
-)
-print("\n")
-
-error = errorestimate_harh(xc,xf,uhc,uhf,"","","")
-print(error)
+end
 
 #c)
-print("c")
+print("c)\n")
 function refine_marked(EToVcoarse, xcoarse, idxMarked)
     EToVfine = EToVcoarse
     xfine = copy(xcoarse)
@@ -214,7 +195,6 @@ function refine_marked(EToVcoarse, xcoarse, idxMarked)
             x_new = x_i + dist 
             
             insert!(xfine, i+1+j, x_new)
-            #insert!(idxMarked, i+1, 0) # this is to take into account that xfine grows which makes xcoarse grow as well.
             j += 1
         end
     end 
@@ -230,8 +210,8 @@ function create_b(f_list, x)
     b = zeros(M)
     
     for i = 2:(M-1)
-        b[i] = f_list[i-1] * h_list[i-1] / 6 + f_list[i] * (h_list[i-1] + h_list[i]) / 3 + f_list[i] * h_list[i] / 6
-    end 
+        b[i] = f_list[i-1] * h_list[i-1] / 6 + f_list[i] * (h_list[i-1] + h_list[i]) / 3 + f_list[i+1] * h_list[i] / 6
+    end     
     
     return b 
 end 
@@ -263,13 +243,12 @@ function BVP1Drhs(L, c, d, x, func)
     A = sparse(rows[1:count], cols[1:count], vals[1:count])
 
     # Algorithm 2
-    ## NOTE: check if A[1, 2] is efficient 
-    b[1] = c
+    b[1] = b[1] + c
     b[2] = b[2] - A[1, 2] * c 
     A[1, 1] = 1
     A[1, 2] = 0 
     A[2, 1] = 0 # modified 
-    b[M] = d 
+    b[M] = b[M] + d 
     b[M - 1] = b[M - 1] - A[M - 1, M] * d
     A[M, M] = 1 
     A[M - 1, M] = 0
@@ -277,34 +256,30 @@ function BVP1Drhs(L, c, d, x, func)
 
     # Version 1
     return A, b, A \ b
-
-    # Version 2 
-    # return A, b, cholesky(A) \ b
 end 
 
-# f) 
-# x = [0.0, 0.2, 0.4, 0.6, 0.7, 0.9, 1.4, 1.5, 1.8, 1.9, 2.0]
-x = collect(LinRange(0, 1, 100))
 
+# x = [0.0, 0.2, 0.4, 0.6, 0.7, 0.9, 1.4, 1.5, 1.8, 1.9, 2.0]
 
 print("d)\n")
-x_arr = collect(LinRange(0, 1, 1_000))
-y_arr = u.(x_arr)
-#plot(x_arr, y_arr, title="u''-u=f", label="u")
+# x_arr = collect(LinRange(0, 1, 1_000))
+# y_arr = u.(x_arr)
+# plot(x_arr, y_arr, title="u''-u=f", label="u")
 
-A, b, u_coeffs_hat = BVP1Drhs(L, c, d, x, f)
-u_hat_arr = u_hat.(x_arr, [u_coeffs_hat], [x])
+# A, b, u_coeffs_hat = BVP1Drhs(L, c, d, x, f)
+# u_hat_arr = u_hat.(x_arr, [u_coeffs_hat], [x])
 
-plot(x_arr, u_hat_arr, label="u_hat")
-xlims!(0, 1)
-ylims!(0, 1)
+# plot(x_arr, u_hat_arr, label="u_hat")
+# xlims!(0, 1)
+# ylims!(0, 1)
 
-savefig("exercise_1_7_f_u_vs_u_hat.png")
+# savefig("exercise_1_7_f_u_vs_u_hat.png")
+
+print("e) and f)\n")
 function calc2(xc)
-    # xc = collect(LinRange(0, 1, 10))
     M = length(xc)
 
-    Δerr_i = 10^-4
+    Δerr_i = 10^(-4)
     idxMarked = ones(M-1)
     max_N = 1_000
     k = 0
@@ -314,33 +289,33 @@ function calc2(xc)
 
         A, b, uhc = BVP1Drhs(L, c, d, xc, f)
         A, b, uhf = BVP1Drhs(L, c, d, xf, f)
-        # error_est = errorestimate_harh(xc, xf, uhc, uhf, "", "", "")
-        error_est = error_estimate(xc, xf, uhc, uhf, "", "", create_mapping_coarse_fine(xc, xf))
-
-        print("error_est = $error_est")
+        error_est = error_estimate_working(xc, xf, uhc, uhf)
 
         idxMarked = Int.(error_est .> Δerr_i)
         xc = copy(xf)
         k += 1
-        print("1 xf: $(length(xf)), xc: $(length(xc))\n")
+        # print("1 xf: $(length(xf)), xc: $(length(xc))\n")
     end 
-    print("2 xf: $(length(xf)), xc: $(length(xc))\n")    
+    # print("2 xf: $(length(xf)), xc: $(length(xc))\n")    
     return k, xf
 end 
 
-k, xf = calc2(collect(LinRange(0, 1, 10)))
+xc = [0, 0.5, 1.0]
+k, xf = calc2(xc)
 print("\nlength(xf) = $(length(xf))\n")
 A, b, u_fine = BVP1Drhs(L, c, d, xf, f)
+
+x_arr = LinRange(0, 1, 1_000)
+u_arr = u.(x_arr)
 u_fine_arr = u_hat.(x_arr, [u_fine], [xf])
 
-plot(x_arr, u_fine_arr, label="u_hat")
-
-
+plot(x_arr, u_fine_arr, label="u_hat", title="u vs u_hat")
+plot!(x_arr, u_arr, label="u")
 xlims!(0, 1)
-ylims!(0, 1)
+ylims!(-12, 1)
 
 savefig("exercise_1_7_e_u_hat_xf.png")
 
 print("\nlength(xf) = $(length(xf))\n")
 print("k iterations: $k\n")
-u_hat_c = u_hat.(x_arr, [u_coeffs_hat], [x])
+print("$xf\n$u_fine")
