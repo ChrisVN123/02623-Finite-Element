@@ -34,7 +34,7 @@ CPUtime = (time() - start_time) / fac
 
 # Plot
 DOF = length(xAMR)
-CO2eq = CPUtime / 3600 * 86 / 1000 * 0.135 # valid for MacBook Pro (assumed power consumption 105)
+CO2eq = CPUtime / 3600 * 86 / 1000 * 0.285 # valid for MacBook Pro (assumed power consumption 86)
 print("CO2eq = $CO2eq\n")
 plot(
     xAMR, funu.(xAMR), 
