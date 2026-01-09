@@ -77,16 +77,18 @@ print("b)\n")
 # Still NOT using EToVcoarse 
 function refine_marked(EToVcoarse, xcoarse, idxMarked)
     EToVfine = EToVcoarse
-    xfine = xcoarse
+    xfine = copy(xcoarse)
     
+    j = 0
     for (i, idx) in enumerate(idxMarked)
         if idx == 1 
             x_i, x_ip1 = xcoarse[i], xcoarse[i+1]
             dist = (x_ip1 - x_i) / 2
             x_new = x_i + dist 
             
-            insert!(xfine, i+1, x_new)
-            insert!(idxMarked, i+1, 0) # this is to take into account that xfine grows which makes xcoarse grow as well.
+            insert!(xfine, i+1+j, x_new)
+            #insert!(idxMarked, i+1, 0) # this is to take into account that xfine grows which makes xcoarse grow as well.
+            j += 1
         end
     end 
 
