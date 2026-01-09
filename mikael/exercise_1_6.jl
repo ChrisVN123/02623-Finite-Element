@@ -1,5 +1,9 @@
 using Plots
 using BenchmarkTools
+using LinearAlgebra
+using SparseArrays
+using Random
+using Polynomials
 
 function N(x, i, VX)
     M = length(VX)
@@ -98,27 +102,36 @@ end
 # c) 
 print("c)\n")
 xcoarse_initial = [0, 0.5, 1.0]
-delta_err_i = 10^-4
+delta_err_i = 2*10^-5
 
+function h_calc(xfine)
+    return (maximum(xfine)-minimum(xfine))/(length(xfine)-1)
+end
 function calc()
     idxMarked = [1, 1]
     xfine = copy(xcoarse_initial)
     count = 0 
+    max_err = []
+    h_bucket = []
     while sum(idxMarked) != 0 && count < 500
+        h_bucket = [h_bucket; h_calc(xfine)]
+        err_decrease = compute_error_decrease("", xfine, "")
         idxMarked = Int.(
-            compute_error_decrease("", xfine, "") .> delta_err_i
+            err_decrease.> delta_err_i
         )
         _, xfine = refine_marked("", xfine, idxMarked)
         count += 1
+        print(count)
+        max_err = [max_err; maximum(err_decrease)]
+        
     end 
 
-    return xfine, count
+    return xfine, count, max_err,h_bucket
 end 
 
-calc()
 print("calc timing: \n")
-@time calc()
-xfine, count = calc()
+#@time calc()
+xfine, count,error_arr, h_arr = calc()
 print("length(xfine) = $(length(xfine))\n")
 print("count = $count\n")
 
@@ -139,5 +152,19 @@ plot(x_arr, [y_arr_initial, y_arr_fine],
 )
 savefig("exercise_1_6_d_initial_vs_xfine.png")
 
+plot(x_arr, [y_arr_initial, y_arr_fine, y_arr], 
+    title = "Initial vs. xfine vs actual", 
+    label=["initial" "fine" "actual"],
+    ls = [:solid :solid :dash]
+)
+savefig("exercise_1_6_d_initial_vs_xfine_vs_u.png")
+
+
 histogram(xfine, title = "Histogram of xfine distribution", label="xfine")
 savefig("exercise_1_6_xfine_histogram.png")
+print(length(h_arr), length(error_arr))
+print(h_arr)
+plot(h_arr,error_arr,title = "Avg element length vs Maximum approximate err")
+savefig("exercise_1_6_d_avg_h_vs_err.png")
+
+print("polynomial fit: \n$(fit(log.(h_arr[10:end]), log.(error_arr[10:end]), 1))\n")
