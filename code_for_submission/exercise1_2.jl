@@ -197,7 +197,7 @@ M_arr = 5000:100:10_000
 h_arr = L ./ (M_arr .- 1) 
 error_arr = error_calculation.(M_arr)
 
-plot(h_arr, error_arr)
+plot(h_arr, error_arr,xflip=true)
 savefig("exercise_1_2_d_jl.png")
 
 # since error_arr \approx C h_arr^2 then 
