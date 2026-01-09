@@ -157,7 +157,7 @@ function error_estimate_working(xc, xf, uhc, uhf)
         x_lower = x_i 
         for j in idx_lower:(idx_upper-1) 
             x_upper = xf[j+1]
-            x_arr = LinRange(x_lower, x_upper, 1_000)
+            x_arr = LinRange(x_lower, x_upper, 500)
             uhf_arr = u_hat.(x_arr, [uhf], [xf])
 
             x_arr_arr = [x_arr_arr; x_arr]
@@ -205,15 +205,33 @@ function refine_marked(EToVcoarse, xcoarse, idxMarked)
 end 
 
 # d) 
-function create_b(f_list, x)
-    M = length(f_list)
+# function create_b(f_list, x)
+#     M = length(f_list)
+#     h_list = x[2:end] - x[1:end-1]
+#     b = zeros(M)
+    
+#     for i = 2:(M-1)
+#         b[i] = f_list[i-1] * h_list[i-1] / 6 + f_list[i] * (h_list[i-1] + h_list[i]) / 3 + f_list[i+1] * h_list[i] / 6
+#     end     
+    
+#     return b 
+# end 
+
+function create_b(M, x)
     h_list = x[2:end] - x[1:end-1]
+
+    d = 150
+
     b = zeros(M)
-    
     for i = 2:(M-1)
-        b[i] = f_list[i-1] * h_list[i-1] / 6 + f_list[i] * (h_list[i-1] + h_list[i]) / 3 + f_list[i+1] * h_list[i] / 6
-    end     
-    
+        x_im1, x_ip1 = x[i-1], x[i+1]
+        x_arr = LinRange(x_im1, x_ip1, d)
+        h = (x_ip1 - x_im1) / d
+        
+        y_arr = f.(x_arr) .* N.(x_arr, [i], [x])
+        b[i] = sum(y_arr) * h
+    end 
+
     return b 
 end 
 
@@ -225,8 +243,9 @@ function BVP1Drhs(L, c, d, x, func)
     rows = Int.(zeros(4 * M))
     cols = Int.(zeros(4 * M))
     vals = zeros(4 * M)
-    f_list = f.(x)
-    b = -create_b(f_list, x)
+    # f_list = f.(x)
+    # b = -create_b(f_list, x)
+    b = -create_b(M, x)
     
     count = 0
     for i in 1:(M-1)
@@ -283,7 +302,10 @@ function calc2(L, c, d, xc)
         _, _, uhc = BVP1Drhs(L, c, d, xc, f)
         _, _, uhf = BVP1Drhs(L, c, d, xf, f)
         error_est = error_estimate_working(xc, xf, uhc, uhf) 
+        print("$(length(xc)), $(length(xf))\n")
 
+        ##############################################################
+        ################# ONLY USED FOR CONVERGENCE ##################
         # error bounds a la 1.7 
         err = maximum(abs.(
             u.(x_arr) - u_hat.(x_arr, [uhf], [xf])
@@ -291,7 +313,7 @@ function calc2(L, c, d, xc)
         h = maximum(xf[2:end] - xf[1:end-1])
         h_arr = [h_arr; h]
         err_arr = [err_arr; err]
-        # 
+        ##############################################################
 
         idxMarked = Int.(error_est .> Δerr_i)
         xc = copy(xf)
@@ -311,19 +333,15 @@ print("c, d = $c, $d\n")
 k, xf, h_arr, err_arr = calc2(L, c, d, xc)
 _, _, u_fine = BVP1Drhs(L, c, d, xf, f)
 
-# x_arr = LinRange(0, 1, 1_000)
-x_arr = []
-print("HERE $x_arr\n")
-for (x_i, x_ip1) in zip(xf[1:end-1], xf[2:end])
-    print("$x_i, $x_ip1\n")
-    x_arr = [x_arr; LinRange(x_i, x_ip1, 1_000)]
-end 
+x_arr = LinRange(0, 1, 1_000)
+# x_arr = []
+# for (x_i, x_ip1) in zip(xf[1:end-1], xf[2:end])
+#     # print("$x_i, $x_ip1\n")
+#     # x_arr = [x_arr; LinRange(x_i, x_ip1, 1_000)]
+#     append!(x_arr, LinRange(x_i, x_ip1, 3))
+# end 
 u_arr = u.(x_arr)
 u_fine_arr = u_hat.(x_arr, [u_fine], [xf])
-
-print(
-    "FINAL ERROR = $(error_estimate_working(xf, x_arr, u_fine, u_arr))"
-)
 
 plot(x_arr, u_fine_arr, label="u_hat", title="u vs u_hat")
 plot!(x_arr, u_arr, label="u")
@@ -337,3 +355,6 @@ print("k iterations: $k\n")
 
 # print("\n$h_arr\n$err_arr\n\n")
 print("fit: $(fit(log.(h_arr), log.(err_arr), 1))\n")
+
+histogram(xf)
+savefig("exercise_1_7_histogram.png")
