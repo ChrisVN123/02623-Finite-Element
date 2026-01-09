@@ -1,12 +1,7 @@
-using Plots 
 using BenchmarkTools
 using LinearAlgebra
 using SparseArrays
-using Random
-using Polynomials
-# functions
 
-#from 1.2
 function K(h_list, r, s, i)
     if (r == 1 && s == 1) || (r == 2 && s == 2)
         return 1 / h_list[i] + h_list[i] / 3
@@ -40,69 +35,6 @@ function N(x, i, VX)
     end 
 end
 
-function compute_error_decrease(fun, VX, EToV)
-    M = length(VX)
-    err_list = []
-    num = 1_000 # must be even! 
-    for (x_i, x_ip1) in zip(VX[1:end-1], VX[2:end])
-        x_i_new = x_i + (x_ip1 - x_i) / 2 
-        x_arr = LinRange(x_i, x_ip1, num)
-        h = (x_ip1 - x_i) / num 
-
-        u_I_h = u_I.(x_arr, [[x_i, x_ip1]])
-
-        half = div(num, 2) 
-
-        u_I_h_refined_1 = u_I.(x_arr[1:half-1], [[x_i, x_i_new]])
-        u_I_h_refined_2 = u_I.(x_arr[half:end], [[x_i_new, x_ip1]])
-        u_I_h_refined = [u_I_h_refined_1; u_I_h_refined_2]
-
-        # approximate the ||.||_2 by the sum 
-        err = sqrt(sum(
-            (u_I_h - u_I_h_refined).^2 .* h 
-        )) 
-        # use analytical solution! 
-
-        err_list = [err_list; err]
-    end 
-
-    return err_list
-end
-
-# b) 
-print("b)\n")
-# Still NOT using EToVcoarse 
-function refine_marked(EToVcoarse, xcoarse, idxMarked)
-    EToVfine = EToVcoarse
-    xfine = xcoarse
-    
-    for (i, idx) in enumerate(idxMarked)
-        if idx == 1 
-            x_i, x_ip1 = xcoarse[i], xcoarse[i+1]
-            dist = (x_ip1 - x_i) / 2
-            x_new = x_i + dist 
-            
-            insert!(xfine, i+1, x_new)
-            insert!(idxMarked, i+1, 0) # this is to take into account that xfine grows which makes xcoarse grow as well.
-        end
-    end 
-
-    return EToVfine, xfine
-end 
-
-function calc()
-    idxMarked = [1, 1]
-    xfine = copy(xcoarse_initial)
-    while sum(idxMarked) != 0
-        idxMarked = Int.(
-            compute_error_decrease("", xfine, "") .> 10^-4
-        )
-        _, xfine = refine_marked("", xfine, idxMarked)
-    end 
-
-    return xfine
-end 
-
 function u_hat(x, u_coeffs_hat, VX)
     res = 0 
     for (i, u_coeff_hat) in enumerate(u_coeffs_hat)
@@ -111,30 +43,14 @@ function u_hat(x, u_coeffs_hat, VX)
     return res 
 end 
 
-"""
-We consider the BVP 
-    u''(x) - u(x) = f(x), 0 <= x <= 1 
-    u(0) = c, u(1) = d 
-"""
-
 function u(x)
     return exp(-800*(x - 0.4)^2) + 0.25*exp(-40*(x - 0.8)^2)
 end 
 
-# a) 
 function f(x)
     return exp(-32*(5*x - 2)^2)*(2560000*x^2 - 2048000*x + 407999) + exp(-(8*(5*x - 4)^2)/5)*(-81/4 + 64*(5*x - 4)^2)
 end 
 
-xc = [0, 0.5, 1]
-xf = [0, 0.25, 0.5, 1]
-uhc = [10,20,10]
-uhf = [9,14,18,10]
-EToVc = [[1,2],[2,3]]               # not used! 
-EToVf = [[1,2],[2,3],[3,4],[4,5]]   # not used!
-
-# b) 
-print("b)\n")
 function create_mapping_coarse_fine(xc, xf)
     res = []
     for x in xc, (j, y) in enumerate(xf)
@@ -177,14 +93,6 @@ function error_estimate_working(xc, xf, uhc, uhf)
     return err_arr
 end
 
-# xc = [0, 0.5, 1.0]
-# xf = [0, 0.25, 0.5, 0.75, 1.0]
-# uhc = [0, 10, 5]
-# uhf = [0, 3, 10, 11, 5]
-# error_estimate_working(xc, xf, uhc, uhf)
-
-#c)
-print("c)\n")
 function refine_marked(EToVcoarse, xcoarse, idxMarked)
     EToVfine = EToVcoarse
     xfine = copy(xcoarse)
@@ -204,7 +112,6 @@ function refine_marked(EToVcoarse, xcoarse, idxMarked)
     return EToVfine, xfine
 end 
 
-# d) 
 function create_b(f_list, x)
     M = length(f_list)
     h_list = x[2:end] - x[1:end-1]
@@ -278,17 +185,12 @@ function BVP1Drhs(L, c, d, x, func)
     return A, b, A \ b
 end 
 
-print("d)\n")
-print("e) and f)\n")
-function calc2(L, c, d, xc)
+function calc2(L, c, d, xc, func, tol, maxit)
     M = length(xc)
 
-    Δerr_i = 10^(-4)
-    # idxMarked = zeros(M-1)
-    # idxMarked[M-1] = 1
+    Δerr_i = tol 
+    max_N = maxit
     idxMarked = ones(M-1)
-    idxMarked = Int.(idxMarked)
-    max_N = 1_000
     k = 0
     xf = zeros(M)
 
@@ -330,41 +232,15 @@ function calc2(L, c, d, xc)
     end 
     
     return k, xf, h_arr, err_arr
+end
+
+function DriverARM17(L, c, d, x, func, tol, maxit)
+    k, xf, _, _ = calc2(L, c, d, x, func, tol, maxit)
+    _, _, u_fine = BVP1Drhs(L, c, d, xf, func)
+
+    return xf, u_fine, k 
 end 
 
-xc = [0, 0.5, 1.0]
-L = 1
-c = exp(-128) + 1 / 4 * exp(-128 / 5)
-d = exp(-288) + exp(-8 / 5)/4
-print("c, d = $c, $d\n")
-
-# TIMING RELATED STUFF 
-calc2(L, c, d, xc)
-BVP1Drhs(L, c, d, xf, f)
-
-print("Time for calc2 and BVP1Drhs:\n")
-@time calc2(L, c, d, xc)
-@time BVP1Drhs(L, c, d, xf, f)
-
-k, xf, h_arr, err_arr = calc2(L, c, d, xc)
-_, _, u_fine = BVP1Drhs(L, c, d, xf, f)
-
-x_arr = LinRange(0, 1, 1_000)
-u_arr = u.(x_arr)
-u_fine_arr = u_hat.(x_arr, [u_fine], [xf])
-
-plot(x_arr, u_fine_arr, label="u_hat", title="u vs u_hat")
-plot!(x_arr, u_arr, label="u")
-xlims!(0, 1)
-ylims!(0, 1)
-
-savefig("exercise_1_7_e_u_hat_xf.png")
-
-print("length(xf) = $(length(xf))\n")
-print("k iterations: $k\n")
-
-# print("\n$h_arr\n$err_arr\n\n")
-print("fit: $(fit(log.(h_arr), log.(err_arr), 1))\n")
-
-histogram(xf)
-savefig("exercise_1_7_histogram.png")
+print(
+    DriverARM17(1, exp(-128) + 1 / 4 * exp(-128 / 5), exp(-288) + exp(-8 / 5)/4, [0, 0.5, 1], "", 10^-4, 1_000)
+)
