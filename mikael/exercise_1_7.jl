@@ -3,7 +3,7 @@ using BenchmarkTools
 using LinearAlgebra
 using SparseArrays
 using Random
-# using Polynomials
+using Polynomials
 # functions
 
 #from 1.2
@@ -122,10 +122,6 @@ function u(x)
 end 
 
 # a) 
-c = exp(-128) + 1 / 4 * exp(-128 / 5)
-d = exp(-288) + exp(-8 / 5)/4
-L = 1
-
 function f(x)
     return exp(-32*(5*x - 2)^2)*(2560000*x^2 - 2048000*x + 407999) + exp(-(8*(5*x - 4)^2)/5)*(-81/4 + 64*(5*x - 4)^2)
 end 
@@ -181,6 +177,12 @@ function error_estimate_working(xc, xf, uhc, uhf)
     return err_arr
 end
 
+# xc = [0, 0.5, 1.0]
+# xf = [0, 0.25, 0.5, 0.75, 1.0]
+# uhc = [0, 10, 5]
+# uhf = [0, 3, 10, 11, 5]
+# error_estimate_working(xc, xf, uhc, uhf)
+
 #c)
 print("c)\n")
 function refine_marked(EToVcoarse, xcoarse, idxMarked)
@@ -202,7 +204,6 @@ function refine_marked(EToVcoarse, xcoarse, idxMarked)
     return EToVfine, xfine
 end 
 
-
 # d) 
 function create_b(f_list, x)
     M = length(f_list)
@@ -218,7 +219,7 @@ end
 
 function BVP1Drhs(L, c, d, x, func)
     M = length(x)
-    h_list = x[2:end] .- x[1:end-1]
+    h_list = x[2:end] - x[1:end-1]
 
     # Algorithm 1
     rows = Int.(zeros(4 * M))
@@ -243,12 +244,12 @@ function BVP1Drhs(L, c, d, x, func)
     A = sparse(rows[1:count], cols[1:count], vals[1:count])
 
     # Algorithm 2
-    b[1] = b[1] + c
+    b[1] = c
     b[2] = b[2] - A[1, 2] * c 
     A[1, 1] = 1
     A[1, 2] = 0 
     A[2, 1] = 0 # modified 
-    b[M] = b[M] + d 
+    b[M] = d 
     b[M - 1] = b[M - 1] - A[M - 1, M] * d
     A[M, M] = 1 
     A[M - 1, M] = 0
@@ -258,64 +259,81 @@ function BVP1Drhs(L, c, d, x, func)
     return A, b, A \ b
 end 
 
-
-# x = [0.0, 0.2, 0.4, 0.6, 0.7, 0.9, 1.4, 1.5, 1.8, 1.9, 2.0]
-
 print("d)\n")
-# x_arr = collect(LinRange(0, 1, 1_000))
-# y_arr = u.(x_arr)
-# plot(x_arr, y_arr, title="u''-u=f", label="u")
-
-# A, b, u_coeffs_hat = BVP1Drhs(L, c, d, x, f)
-# u_hat_arr = u_hat.(x_arr, [u_coeffs_hat], [x])
-
-# plot(x_arr, u_hat_arr, label="u_hat")
-# xlims!(0, 1)
-# ylims!(0, 1)
-
-# savefig("exercise_1_7_f_u_vs_u_hat.png")
-
 print("e) and f)\n")
-function calc2(xc)
+function calc2(L, c, d, xc)
     M = length(xc)
 
     Δerr_i = 10^(-4)
-    idxMarked = ones(M-1)
+    idxMarked = zeros(M-1)
+    idxMarked[M-1] = 1
+    idxMarked = Int.(idxMarked)
     max_N = 1_000
     k = 0
     xf = 0 
+
+    x_arr = LinRange(0, 1, 2_000)
+    h_arr = []
+    err_arr = []
+
     while sum(idxMarked) != 0 && k <= max_N
+        print("$k, $idxMarked\n")
         _, xf = refine_marked("", xc, idxMarked)
 
-        A, b, uhc = BVP1Drhs(L, c, d, xc, f)
-        A, b, uhf = BVP1Drhs(L, c, d, xf, f)
-        error_est = error_estimate_working(xc, xf, uhc, uhf)
+        _, _, uhc = BVP1Drhs(L, c, d, xc, f)
+        _, _, uhf = BVP1Drhs(L, c, d, xf, f)
+        error_est = error_estimate_working(xc, xf, uhc, uhf) 
+
+        # error bounds a la 1.7 
+        err = maximum(abs.(
+            u.(x_arr) - u_hat.(x_arr, [uhf], [xf])
+        ))
+        h = maximum(xf[2:end] - xf[1:end-1])
+        h_arr = [h_arr; h]
+        err_arr = [err_arr; err]
+        # 
 
         idxMarked = Int.(error_est .> Δerr_i)
         xc = copy(xf)
         k += 1
-        # print("1 xf: $(length(xf)), xc: $(length(xc))\n")
     end 
-    # print("2 xf: $(length(xf)), xc: $(length(xc))\n")    
-    return k, xf
+    
+    return k, xf, h_arr, err_arr
 end 
 
 xc = [0, 0.5, 1.0]
-k, xf = calc2(xc)
-print("\nlength(xf) = $(length(xf))\n")
-A, b, u_fine = BVP1Drhs(L, c, d, xf, f)
+# xc = collect(LinRange(0, 1, 50))
+L = 1
+c = exp(-128) + 1 / 4 * exp(-128 / 5)
+d = exp(-288) + exp(-8 / 5)/4
+print("c, d = $c, $d\n")
 
-x_arr = LinRange(0, 1, 1_000)
+k, xf, h_arr, err_arr = calc2(L, c, d, xc)
+_, _, u_fine = BVP1Drhs(L, c, d, xf, f)
+
+# x_arr = LinRange(0, 1, 1_000)
+x_arr = []
+print("HERE $x_arr\n")
+for (x_i, x_ip1) in zip(xf[1:end-1], xf[2:end])
+    print("$x_i, $x_ip1\n")
+    x_arr = [x_arr; LinRange(x_i, x_ip1, 1_000)]
+end 
 u_arr = u.(x_arr)
 u_fine_arr = u_hat.(x_arr, [u_fine], [xf])
+
+print(
+    "FINAL ERROR = $(error_estimate_working(xf, x_arr, u_fine, u_arr))"
+)
 
 plot(x_arr, u_fine_arr, label="u_hat", title="u vs u_hat")
 plot!(x_arr, u_arr, label="u")
 xlims!(0, 1)
-ylims!(-12, 1)
+# ylims!(-12, 1)
 
 savefig("exercise_1_7_e_u_hat_xf.png")
 
-print("\nlength(xf) = $(length(xf))\n")
+print("length(xf) = $(length(xf))\n")
 print("k iterations: $k\n")
-print("$xf\n$u_fine")
+
+# print("\n$h_arr\n$err_arr\n\n")
+print("fit: $(fit(log.(h_arr), log.(err_arr), 1))\n")
