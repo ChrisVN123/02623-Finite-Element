@@ -43,7 +43,7 @@ function u_hat(x, u_coeffs_hat, VX)
     return res 
 end 
 
-function u(x)
+function u_func(x)
     return exp(-800*(x - 0.4)^2) + 0.25*exp(-40*(x - 0.8)^2)
 end 
 
@@ -219,7 +219,7 @@ function calc2(L, c, d, xc, func, tol, maxit)
         ################# ONLY USED FOR CONVERGENCE #################
         # error bounds a la 1.7 
         err = maximum(abs.(
-            u.(x_arr) - u_hat.(x_arr, [uhf], [xf])
+            u_func.(x_arr) - u_hat.(x_arr, [uhf], [xf])
         ))
         h = maximum(xf[2:end] - xf[1:end-1])
         h_arr = [h_arr; h]
@@ -234,13 +234,13 @@ function calc2(L, c, d, xc, func, tol, maxit)
     return k, xf, h_arr, err_arr
 end
 
-function DriverARM17(L, c, d, x, func, tol, maxit)
+function DriverAMR17(L, c, d, x, func, tol, maxit)
     k, xf, _, _ = calc2(L, c, d, x, func, tol, maxit)
     _, _, u_fine = BVP1Drhs(L, c, d, xf, func)
 
     return xf, u_fine, k 
 end 
 
-print(
-    DriverARM17(1, exp(-128) + 1 / 4 * exp(-128 / 5), exp(-288) + exp(-8 / 5)/4, [0, 0.5, 1], "", 10^-4, 1_000)
-)
+# print(
+#     DriverAMR17(1, exp(-128) + 1 / 4 * exp(-128 / 5), exp(-288) + exp(-8 / 5)/4, [0, 0.5, 1], "", 10^-4, 1_000)
+# )

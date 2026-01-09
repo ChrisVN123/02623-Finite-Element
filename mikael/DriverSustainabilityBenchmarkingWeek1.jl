@@ -1,5 +1,6 @@
 # using Printf
 # using PyPlot
+using Plots
 
 # Import the DriverAMR17 function from the external Julia script DriverAMR17.jl
 include("DriverAMR17.jl")
@@ -18,28 +19,36 @@ maxit = 50
 
 # Let's call the FEM BVP 1D Solver with AMR
 # time the code using time
-fac = 100 # we do multiple runs to get the average time
+fac = 3 # we do multiple runs to get the average time
 start_time = time()
+
+xAMR = 0
+u = 0
+iter = 0
+
 for i in 1:fac
-    xAMR, u, iter = DriverAMR17(L, c, d, x, func, tol, maxit)
+    global xAMR, u, iter = DriverAMR17(L, c, d, x, func, tol, maxit)
 end
 CPUtime = (time() - start_time) / fac
 
+
 # Plot
-figure()
-plot(xAMR, funu.(xAMR), linewidth=2)
-plot(xAMR, u, ".", markersize=15)
-xlabel("x")
-ylabel("u")
 DOF = length(xAMR)
 CO2eq = CPUtime / 3600 * 86 / 1000 * 0.135 # valid for MacBook Pro (assumed power consumption 105)
-title("Group: <Your Group ID>, Iter: $(iter), Time: $(round(CPUtime, digits=4)) s, DOF: $(DOF), CO2e=$(Printf.@sprintf("%.4e", CO2eq)) kg CO2")
-legend(["Exact", "AMR"], loc="upper right")
+print("CO2eq = $CO2eq\n")
+plot(
+    xAMR, funu.(xAMR), 
+    title="Group: <Your Group ID>, Iter: $(iter), Time: $(round(CPUtime, digits=4)) s, DOF: $(DOF), CO2e=$(CO2eq) kg CO2",
+    label=["Exact", "AMR"]
+)
+plot!(xAMR, u)
+savefig("DriverSustainability.png")
 
 # Element size distribution
 h = diff(xAMR)
-figure()
-hist(h)
-xlabel("h")
-ylabel("# of elements")
-show()
+# figure()
+histogram(h)
+savefig("DriverSustainabilityHistogram.png")
+# xlabel("h")
+# ylabel("# of elements")
+# show()
