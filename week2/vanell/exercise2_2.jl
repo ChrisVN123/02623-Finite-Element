@@ -33,19 +33,6 @@ function basfun(n, VX, VY, EToV)
     return Δ, abc
 end
 
-
-# display(EToV)
-println("CASE 2.2a:")
-n = 4
-x0, y0 = -2.5, -4.8 
-L1, L2 = 7.6, 5.9 
-noelms1, noelms2 = 4, 3
-VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
-EToV = conelmtab(noelms1, noelms2)
-d, abc = basfun(n, VX, VY, EToV)
-display(d)
-display(abc)
-
 function outernormal(n, k, VX, VY, EToV)
     i, j, h = EToV[n, :]
     x1, x2 = nothing, nothing
@@ -69,19 +56,7 @@ function outernormal(n, k, VX, VY, EToV)
     return [t2, -t1] * normal
 end
 
-x0, y0 = -2.5, -4.8 
-L1, L2 = 7.6, 5.9 
-noelms1, noelms2 = 4, 3
-VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
-EToV = conelmtab(noelms1, noelms2)
-
-println("CASE 2.2b:")
-for k = 1:3 
-    println("k = $k")
-    n_vec = outernormal(9, k, VX, VY, EToV)
-    display(n_vec)
-end 
-
+#### CLEAN UP? ####
 # print("Running Element mesh creation")
 # @time ptsM = xy(0.0, 0.0, 4.0, 3.0, 4, 3)
 # print("Running EToV")
@@ -92,16 +67,6 @@ end
 
 
 #delta_abc(24, 1,1, EToV(4,3),ptsM)
-
-
-
-
-
-
-
-
-
-
 
 # function plot_mesh(ptsM, etoV; show_ids=true)
 #     ny, nx = size(ptsM)

@@ -21,14 +21,6 @@ function xy(x0, y0, L1, L2, noelms1, noelms2)
     return VX, VY
 end
 
-x0, y0 = -2.5, -4.8 
-L1, L2 = 7.6, 5.9 
-noelms1, noelms2 = 4, 3
-
-VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
-println("Exercise 2.1 test case 1")
-println("VX = $VX")
-println("VY = $VY")
 function conelmtab(nx::Int, ny::Int)
     @assert nx ≥ 2 && ny ≥ 2 
     nx += 1
@@ -64,6 +56,3 @@ function conelmtab(nx::Int, ny::Int)
 
     return etoV
 end
-
-println("Exercise 2.1 b:")
-display(conelmtab(4, 3))

@@ -8,13 +8,13 @@ using Polynomials
 include("exercise2_1.jl")
 include("exercise2_2.jl")
 
-println("EXERCISE 2.3")
-
-function k_rs(r, s, lam1, lam2)
-    
-end 
-
 function assembly_matrix(VX, VY, EToV, lam1, lam2, qt)
+    """
+    Algorithm 4 
+    
+    SHOULD BE SPARSE 
+    Smart way? 
+    """
     N = size(EToV)[1]
     M = length(VX)
     
@@ -26,7 +26,7 @@ function assembly_matrix(VX, VY, EToV, lam1, lam2, qt)
         Δ, abc = basfun(n, VX, VY, EToV)        
         
         for r in 1:3
-            q̃ = (qt[i] + qt[j] + qt[k]) / 3 
+            q̃ = (qt[i] + qt[j] + qt[k]) / 3 # Can be moved out
             q_r_n = abs(Δ)/3 * q̃
             ĩ = EToV[n, r]
             
@@ -43,27 +43,6 @@ function assembly_matrix(VX, VY, EToV, lam1, lam2, qt)
         end 
     end
 
+    A = sparse(A)
     return A, b 
 end 
-
-println("CASE 1")
-x0, y0 = 0, 0 
-L1, L2 = 1, 1
-noelms1, noelms2 = 4, 3 
-qt = zeros(noelms1 * noelms2 * 2)
-lam1 = 1 
-lam2 = 1
-
-VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
-EToV = conelmtab(noelms1, noelms2)
-
-A, b = assembly_matrix(VX, VY, EToV, lam1, lam2, qt)
-display(A)
-display(diag(A))
-#display(solve)
-
-# function test_q(x,y)
-#     return -6*x + 2*y - 2
-# end
-
-# qt_space = test_q.(VX,VY)
