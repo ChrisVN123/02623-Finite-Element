@@ -56,13 +56,12 @@ x0, y0 = 0, 0
 L1, L2 = 1, 1
 noelms1, noelms2 = 4, 3 
 qt = zeros(noelms1 * noelms2 * 2)
-lam1 = 1 
-lam2 = 1
+lam1, lam2 = 1, 1
 
 VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
 EToV = conelmtab(noelms1, noelms2)
 
-A, b = assembly_matrix(VX, VY, EToV, lam1, lam2, qt)
+A, b = assembly(VX, VY, EToV, lam1, lam2, qt)
 display(A)
 display(diag(A)) # ???
 
@@ -73,13 +72,49 @@ L1, L2 = 7.6, 5.9
 noelms1, noelms2 = 4, 3
 
 VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
-lam1 = 1 
-lam2 = 1 
+lam1, lam2 = 1, 1
 
 VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
 EToV = conelmtab(noelms1, noelms2)
 qt = q.(VX, VY)
 
-A, b = assembly_matrix(VX, VY, EToV, lam1, lam2, qt)
+A, b = assembly(VX, VY, EToV, lam1, lam2, qt)
 display(diag(A)) # ???
+display(b)
+
+println("EXERCISE 2.4")
+println("CASE 1:")
+x0, y0 = 0, 0 
+L1, L2 = 1, 1
+noelms1, noelms2 = 4, 3
+qt = zeros(noelms1 * noelms2 * 2)
+f = ones(noelms1 * noelms2 * 2)
+lam1, lam2 = 1, 1
+
+VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
+EToV = conelmtab(noelms1, noelms2)
+
+A, b = assembly(VX, VY, EToV, lam1, lam2, qt)
+bnodes = calculate_bnodes(noelms1, noelms2)
+A, b = dirbc(bnodes, f, A, b)
+
+display(A) 
+display(b)
+# still unsure about the [B, d] = thing 
+
+println("CASE 2:")
+x0, y0 = -2.5, -4.8 
+L1, L2 = 7.6, 5.9 
+noelms1, noelms2 = 4, 3
+q(x, y) = -6 * x + 2 * y - 2 
+f24_2(x, y) = x^3 - x^2 * y + y^2 - 1
+lam1, lam2 = 1, 1
+
+VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
+EToV = conelmtab(noelms1, noelms2)
+
+A, b = assembly(VX, VY, EToV, lam1, lam2, q.(VX, VY))
+bnodes = calculate_bnodes(noelms1, noelms2)
+A, b = dirbc(bnodes, f24_2.(VX, VY), A, b)
+
 display(b)

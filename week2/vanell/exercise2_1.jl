@@ -12,7 +12,7 @@ function xy(x0, y0, L1, L2, noelms1, noelms2)
     VX = Vector{Float64}(undef, (noelms1+1)*(noelms2+1))
     VY = Vector{Float64}(undef, (noelms1+1)*(noelms2+1))
     k=0
-    for i in 0:noelms1, j in 0:noelms2
+    for i ∈ 0:noelms1, j ∈ 0:noelms2
         k += 1
         VX[k] = x0 + i * Δx
         VY[k] = y0 + L2 - j * Δy
@@ -31,9 +31,9 @@ function conelmtab(nx::Int, ny::Int)
     e = 1
     tl = 1 
 
-    for col in 1:(nx - 1)            
+    for col ∈ 1:(nx - 1)            
         tl = 1 + (col - 1) * ny   
-        for row in 1:(ny - 1)          
+        for row ∈ 1:(ny - 1)          
             tr = tl + ny
             bl = tl + 1
             br = tl + ny + 1
