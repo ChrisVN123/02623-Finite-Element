@@ -8,10 +8,7 @@ using Polynomials
 include("exercise2_1.jl")
 include("exercise2_2.jl")
 
-function assembly_matrix(VX, VY, EToV)
-    lam1 = 1 
-    lam2 = 1
-
+function assembly_matrix(VX, VY, EToV, lam1, lam2, qt)
     N = size(EToV)[1]
     
     A = Matrix{Float64}(undef, N, N)
@@ -25,8 +22,8 @@ function assembly_matrix(VX, VY, EToV)
         
         for r in 1:3
             Δ, abc = basfun(n, VX, VY, EToV)
-            q̃ = 0.5 # FIX 
-            q_r = abs(Δ)/3*q
+            q̃ = (qt(x_i, y_1) + qt(x_j, y_j) + qt(x_k, y_k)) / 3 
+            q_r = abs(Δ)/3 * q̃
             
             ĩ = 0 
             if r == 1 
@@ -48,7 +45,7 @@ function assembly_matrix(VX, VY, EToV)
                     j̃ = k 
                 end 
 
-                k_rs = 1 / (4 abs(Δ)) * (lam1 * b_r * b_s + lam2 * c_r * c_s)
+                k_rs = 1 / (4 * abs(Δ)) * (lam1 * b_r * b_s + lam2 * c_r * c_s)
             end 
         end 
 
