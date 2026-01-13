@@ -98,7 +98,7 @@ A, b = assembly(VX, VY, EToV, lam1, lam2, qt)
 bnodes = calculate_bnodes(noelms1, noelms2)
 A, b = dirbc(bnodes, f, A, b)
 
-display(A) 
+display(diag(A)) 
 display(b)
 # still unsure about the [B, d] = thing 
 
@@ -116,5 +116,5 @@ EToV = conelmtab(noelms1, noelms2)
 A, b = assembly(VX, VY, EToV, lam1, lam2, q.(VX, VY))
 bnodes = calculate_bnodes(noelms1, noelms2)
 A, b = dirbc(bnodes, f24_2.(VX, VY), A, b)
-
+display(bnodes)
 display(b)

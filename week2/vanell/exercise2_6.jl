@@ -79,9 +79,10 @@ function neubc(VX, VY, EToV, beds, q, b)
     """
     q is a function 
     """
-    
+    # println("b_input $b")
     E1 = size(beds)[1]
     for p ∈ 1:E1 
+        # println("p, $p")
         n, r = beds[p, 1], Int(beds[p, 2])
 
         if r == 1 
@@ -91,9 +92,7 @@ function neubc(VX, VY, EToV, beds, q, b)
         elseif r == 3 
             s = 1 
         end 
-        
-        println("p: $p, r: $r, s: $s")
-        
+                
         i, j = EToV[n, r], EToV[n, s]
         xi, yi = VX[i], VY[i]
         xj, yj = VX[j], VY[j]
@@ -103,11 +102,17 @@ function neubc(VX, VY, EToV, beds, q, b)
         q_midpoint = q(xc, yc)
 
         q_t = q_midpoint / 2 * ( (xj - xi)^2 + (yj - yi)^2 )^0.5 # since they are equal by (2.41)
-        
+        # println("q_t = $q_t")
+        # println("i: $i, b_i_start: $(b[i])")
         b[i] += -q_t
+        # println("i: $i, b_i_end: $(b[i])")
         b[j] += -q_t 
+        # if p == E1
+        #     println("final b in loop = $b")
+        # end 
     end 
 
+    # println("final b = $b")
     return b 
 end
 
