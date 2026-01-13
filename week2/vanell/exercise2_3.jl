@@ -24,7 +24,7 @@ function assembly(VX, VY, EToV, lam1, lam2, qt)
 
     for n ∈ 1:N
         i, j, k = EToV[n, :]
-        Δ, abc = basfun(n, VX, VY, EToV)        
+        Δ, abc = basfun(n, VX, VY, EToV) 
         
         for r ∈ 1:3
             q̃ = (qt[i] + qt[j] + qt[k]) / 3 # Can be moved out
