@@ -33,6 +33,7 @@ function plot_fem_solution3d(VX, VY, EToV, u;
     @assert nen == 3 || nen == 4
 
     positions = GeometryBasics.Point3f.(x, y, z)
+    
 
     faces = GeometryBasics.TriangleFace{Int}[]
     if nen == 3
