@@ -23,7 +23,7 @@ println("VY = $VY")
 println("b) CASE 1:")
 display(conelmtab(4, 3))
 
-println("EXERCISE 2.2")
+println("\nEXERCISE 2.2")
 println("CASE 2.2a:")
 n = 4 # or 9? 
 x0, y0 = -2.5, -4.8 
@@ -34,7 +34,8 @@ VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
 EToV = conelmtab(noelms1, noelms2)
 d, abc = basfun(n, VX, VY, EToV)
 
-display(d)
+println("Δ = $d")
+println("abc = ")
 display(abc)
 
 x0, y0 = -2.5, -4.8 
@@ -46,11 +47,11 @@ EToV = conelmtab(noelms1, noelms2)
 println("CASE 2.2b:")
 for k = 1:3 
     println("k = $k")
-    n_vec = outernormal(9, k, VX, VY, EToV)
+    n_vec = outernormal(n, k, VX, VY, EToV) # n = 4 
     display(n_vec)
 end 
 
-println("EXERCISE 2.3")
+println("\nEXERCISE 2.3")
 println("CASE 1:")
 x0, y0 = 0, 0 
 L1, L2 = 1, 1
@@ -63,7 +64,40 @@ EToV = conelmtab(noelms1, noelms2)
 
 A, b = assembly(VX, VY, EToV, lam1, lam2, qt)
 display(A)
-display(diag(A)) # ???
+
+function spdiags(A)
+    """
+    A is square 
+    Should work!
+    """
+    M = size(A)[1]
+    B = zeros(M, M)
+    d = []
+    
+    count = 1
+    for k ∈ [-M:0; 1:M]
+        kth_diag = diag(A, k)
+        if !iszero(kth_diag)
+            l = length(kth_diag)
+            if k <= 0 
+                B[1:l, count] = kth_diag 
+            else 
+                B[M-l+1:end, count] = kth_diag
+            end 
+            push!(d, k)
+            count += 1
+        end 
+    end 
+
+    return B[:, 1:count-1], d 
+end
+
+B, d = spdiags(A)
+println("B = ")
+display(B)
+println("d = ")
+display(d)
+
 
 println("CASE 2:")
 q(x, y) = -6 * x + 2 * y - 2
@@ -79,10 +113,17 @@ EToV = conelmtab(noelms1, noelms2)
 qt = q.(VX, VY)
 
 A, b = assembly(VX, VY, EToV, lam1, lam2, qt)
-display(diag(A)) # ???
+
+B, d = spdiags(A)
+println("B = ")
+display(B)
+println("d = ")
+display(d)
+
+println("b = ")
 display(b)
 
-println("EXERCISE 2.4")
+println("\nEXERCISE 2.4")
 println("CASE 1:")
 x0, y0 = 0, 0 
 L1, L2 = 1, 1
@@ -93,14 +134,23 @@ lam1, lam2 = 1, 1
 
 VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
 EToV = conelmtab(noelms1, noelms2)
+display(EToV)
 
 A, b = assembly(VX, VY, EToV, lam1, lam2, qt)
 bnodes = calculate_bnodes(noelms1, noelms2)
 A, b = dirbc(bnodes, f, A, b)
 
-display(diag(A)) 
+B, d = spdiags(A)
+println("B = ")
+display(B)
+println("d = ")
+display(d)
+
+println("b = ")
 display(b)
-# still unsure about the [B, d] = thing 
+
+println("Array(A)[1:13, 1:13] = ")
+display(Array(A)[1:13, 1:13])
 
 println("CASE 2:")
 x0, y0 = -2.5, -4.8 
@@ -116,5 +166,12 @@ EToV = conelmtab(noelms1, noelms2)
 A, b = assembly(VX, VY, EToV, lam1, lam2, q.(VX, VY))
 bnodes = calculate_bnodes(noelms1, noelms2)
 A, b = dirbc(bnodes, f24_2.(VX, VY), A, b)
-display(bnodes)
+
+B, d = spdiags(A)
+println("B = ")
+display(B)
+println("d = ")
+display(d)
+
+println("b = ")
 display(b)

@@ -76,8 +76,6 @@ b_l = neubc(VX, VY, EToV, Γ1[1:3,:], q_l, b)
 println("b_l = $b_l")
 b_b = neubc(VX, VY, EToV, Γ1[4:end,:], q_b, b_l) # maybe! 
 
-
-
 println("b_b = $b_b")
 
 bnodes_dirbc = []
