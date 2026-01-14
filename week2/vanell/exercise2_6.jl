@@ -61,20 +61,22 @@ function ConstructBeds(VX, VY, EToV, tol)
     end 
     return E1
 end
-# x0, y0 = -2.5, -4.8 
-# L1, L2 = 7.6, 5.9 
-# noelms1, noelms2 = 4, 3
-# q(x, y) = -6 * x + 2 * y - 2 
-# f24_2(x, y) = x^3 - x^2 * y + y^2 - 1
-# lam1, lam2 = 1, 1
 
-# VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
-# EToV = conelmtab(noelms1, noelms2)
-# A, b = assembly(VX, VY, EToV, lam1, lam2, q.(VX, VY))
+x0, y0 = -2.5, -4.8 
+L1, L2 = 7.6, 5.9 
+noelms1, noelms2 = 4, 3
+q(x, y) = -6 * x + 2 * y - 2 
+f24_2(x, y) = x^3 - x^2 * y + y^2 - 1
+lam1, lam2 = 1, 1
 
-# cb = ConstructBeds(VX, VY, EToV, "")
-# println("E1: $cb")
-# print(cb)
+VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
+EToV = conelmtab(noelms1, noelms2)
+A, b = assembly(VX, VY, EToV, lam1, lam2, q.(VX, VY))
+
+beds = ConstructBeds(VX, VY, EToV, "")
+println("beds = ")
+display(beds)
+
 function neubc(VX, VY, EToV, beds, q, b)
     """
     q is a function 

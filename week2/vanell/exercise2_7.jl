@@ -34,10 +34,8 @@ VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
 EToV = conelmtab(noelms1, noelms2)
 
 u(x, y) = 3 * x + 5 * y - 7
-f(x, y) = 3 * x + 5 * y - 7
-u_x(x, y) = 3
-u_y(x, y) = 5
-q(x, y) = 0
+f(x, y) = u(x, y)
+q̃(x, y) = 0 
 
 A, b = assembly(VX, VY, EToV, lam1, lam2, q.(VX, VY))
 bnodes = calculate_bnodes(noelms1, noelms2)
