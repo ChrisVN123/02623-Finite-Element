@@ -13,10 +13,9 @@ include("exercise2_6.jl")
 include("exercise2_7.jl")
 
 println("EXERCISE 2.8")
-println("a)")
 
-println("b)")
 function program_b(n, name)
+
     x0, y0 = 0, 0
     L1, L2 = 1, 1
     noelms1, noelms2 = n, n
@@ -51,7 +50,7 @@ function program_b(n, name)
 
     fig = plot_fem_solution3d(VX, VY, EToV, û)
     save(joinpath(pwd(), "plots/$name.png"), fig)
-    return û[1+noelms2]
+    return VX, VY, û, û[1+noelms2]
 end
 program_b(3, "2.8_b_results")
 
@@ -87,18 +86,37 @@ function program_c(n, name)
     idx_0 = Int(ceil(length(û) / 2))
     return VX, VY, û, û[idx_0]
 end
-program_c(6, "2.8_c_results")
+
+u_c(x, y) = cos(pi * x) * cos(pi * y)
+
+function ex2_7_b_c()
+    println("b)")
+
+    VX, VY, û, û0_b = program_b(3, "2.8_d_b_testing")
+
+    err_b = compute_error(VX, VY, û, u_c)
+    println("Error for exercise b) is E = $err_b")
+
+
+    println("c)")
+
+    VXc, VYc, û_c_c, û0_c_c = program_c(6, "2.8_c_results")
+    err_c = compute_error(VXc, VYc, û_c_c, u_c)
+    println("Error for exercise b) is E = $err_c")
+end
+
+ex2_7_b_c()
 
 println("d)")
 p_arr = collect(1:5)
 err_arr_c = []
-u_c(x, y) = cos(pi * x) * cos(pi * y)
+
 
 for p ∈ p_arr
     nb = 2^p 
     nc = 2^(p+1)
 
-    û0_b = program_b(nb, "2.8_d_b_$p")
+    local VX, VY, û_b, û0_b = program_b(nb, "2.8_d_b_$p")
     local VX, VY, û_c, û0_c = program_c(nc, "2.8_d_c_$p")
 
     err = compute_error(VX, VY, û_c, u_c)
