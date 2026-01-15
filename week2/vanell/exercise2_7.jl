@@ -53,6 +53,8 @@ function dirichlet_bound(noelms1, noelms2)
     return bnodes_dirbc
 end
 
+# ERROR CALCULATIONS 
+
 println("EXERCISE 2.7")
 println("CASE 1:")
 x0, y0 = -2.5, -4.8
