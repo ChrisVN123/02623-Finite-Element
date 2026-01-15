@@ -69,6 +69,60 @@ function plot_fem_solution3d(VX, VY, EToV, u;
     return fig
 end
 
+
+function plot_mesh(ptsM, etoV; show_ids=true)
+    ny, nx = size(ptsM)
+
+    # 1) Build id -> (x,y)
+    id2xy = Dict{Int, Tuple{Float64,Float64}}()
+    xs = Float64[]
+    ys = Float64[]
+    ids = Int[]
+
+    for I in CartesianIndices(ptsM)
+        x, y, idf = ptsM[I]
+        id = Int(idf)
+        id2xy[id] = (x, y)
+        push!(xs, x); push!(ys, y); push!(ids, id)
+    end
+
+    # 2) Collect unique edges from triangles
+    # Each triangle has edges (a,b), (b,c), (c,a)
+    edges = Set{Tuple{Int,Int}}()
+    @inbounds for r in 1:size(etoV, 1)
+        a = etoV[r, 2]; b = etoV[r, 3]; c = etoV[r, 4]
+        push!(edges, (min(a,b), max(a,b)))
+        push!(edges, (min(b,c), max(b,c)))
+        push!(edges, (min(c,a), max(c,a)))
+    end
+
+    # 3) Plot nodes
+    p = scatter(xs, ys;
+        legend=false,
+        aspect_ratio=:equal,
+        grid=true,
+        xlabel="x", ylabel="y",
+        title="FEM mesh"
+    )
+
+    # 4) Draw edges
+    for (u, v) in edges
+        (x1, y1) = id2xy[u]
+        (x2, y2) = id2xy[v]
+        plot!(p, [x1, x2], [y1, y2]; label=false)
+    end
+
+    # 5) Optional node labels
+    if show_ids
+        for (x, y, id) in zip(xs, ys, ids)
+            annotate!(p, x, y, text(string(id), 9, :left))
+        end
+    end
+
+    return savefig("ex2_2.png")
+end
+
+
 # x0, y0 = -2.5, -4.8 
 # L1, L2 = 7.6, 5.9 
 # noelms1, noelms2 = 4, 3

@@ -21,14 +21,13 @@ function local_node(col_idx)
     end
 end
 
-function ConstructBeds(VX, VY, EToV, tol)
-    noelms1 = (EToV[1,1])-1
-    noelms2 = Int(size(EToV)[1] / (2*noelms1))
-    
+function ConstructBeds(noelms1, noelms2, EToV)
     bnodes = calculate_bnodes(noelms1, noelms2)
     E1 = Matrix{Int}(undef, 2*noelms1+2*noelms2, 2)
     k = 1
-    skip_vals = [noelms2*2-1,(noelms1+1)*(noelms2+1)] #check for other values
+    noelms = noelms1 * noelms2 * 2
+    noelms_to_exclusion = noelms2 * 2 - 1
+    skip_vals = [noelms_to_exclusion, noelms - noelms_to_exclusion + 1] #check for other values
     for i in 1:size(EToV)[1]
         if i in skip_vals
             continue
@@ -37,9 +36,6 @@ function ConstructBeds(VX, VY, EToV, tol)
         l = length(intsct)
         global_nodes = []
         col_idx = []
-        if k == 15
-            display(E1)
-        end
         if l > 1
             for j in intsct
                 push!(global_nodes, j)
@@ -62,20 +58,20 @@ function ConstructBeds(VX, VY, EToV, tol)
     return E1
 end
 
-x0, y0 = -2.5, -4.8 
-L1, L2 = 7.6, 5.9 
-noelms1, noelms2 = 4, 3
-q(x, y) = -6 * x + 2 * y - 2 
-f24_2(x, y) = x^3 - x^2 * y + y^2 - 1
-lam1, lam2 = 1, 1
+# x0, y0 = -2.5, -4.8 
+# L1, L2 = 7.6, 5.9 
+# noelms1, noelms2 = 4, 3
+# q(x, y) = -6 * x + 2 * y - 2 
+# f24_2(x, y) = x^3 - x^2 * y + y^2 - 1
+# lam1, lam2 = 1, 1
 
-VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
-EToV = conelmtab(noelms1, noelms2)
-A, b = assembly(VX, VY, EToV, lam1, lam2, q.(VX, VY))
+# VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
+# EToV = conelmtab(noelms1, noelms2)
+# A, b = assembly(VX, VY, EToV, lam1, lam2, q.(VX, VY))
 
-beds = ConstructBeds(VX, VY, EToV, "")
-println("beds = ")
-display(beds)
+# beds = ConstructBeds(VX, VY, EToV)
+# println("beds = ")
+# display(beds)
 
 function neubc(VX, VY, EToV, beds, q, b)
     """
@@ -85,7 +81,7 @@ function neubc(VX, VY, EToV, beds, q, b)
     E1 = size(beds)[1]
     for p ∈ 1:E1 
         # println("p, $p")
-        n, r = beds[p, 1], Int(beds[p, 2])
+        n, r = beds[p, 1], beds[p, 2]
 
         if r == 1 
             s = 2 
@@ -103,18 +99,11 @@ function neubc(VX, VY, EToV, beds, q, b)
         xc, yc = (xi + xj) / 2, (yi + yj) / 2 
         q_midpoint = q(xc, yc)
 
-        q_t = q_midpoint / 2 * ( (xj - xi)^2 + (yj - yi)^2 )^0.5 # since they are equal by (2.41)
-        # println("q_t = $q_t")
-        # println("i: $i, b_i_start: $(b[i])")
+        q_t = q_midpoint / 2 * ((xj - xi)^2 + (yj - yi)^2)^0.5 # since they are equal by (2.41)
         b[i] += -q_t
-        # println("i: $i, b_i_end: $(b[i])")
         b[j] += -q_t 
-        # if p == E1
-        #     println("final b in loop = $b")
-        # end 
     end 
 
-    # println("final b = $b")
     return b 
 end
 
