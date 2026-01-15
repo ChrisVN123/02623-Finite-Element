@@ -57,7 +57,7 @@ program_b(3, "2.8_b_results")
 
 println("c)")
 function program_c(n, name)
-   x0, y0 = -1, -1
+    x0, y0 = -1, -1
     L1, L2 = 2, 2
     noelms1, noelms2 = n, n
     lam1, lam2 = 1, 1 
@@ -84,19 +84,33 @@ function program_c(n, name)
     save(joinpath(pwd(), "plots/$name.png"), fig)    
     
     idx_0 = Int(ceil(length(û) / 2))
-    return û[idx_0]
+    return VX, VY, û, û[idx_0]
 end
 program_c(6, "2.8_c_results")
 
 println("d)")
-for p ∈ 1:6
+p_arr = collect(1:6)
+err_arr_c = []
+u_c(x, y) = cos(pi * x) * cos(pi * y)
+
+for p ∈ p_arr
     nb = 2^p 
     nc = 2^(p+1)
 
     û0_b = program_b(nb, "2.8_d_b_$p")
-    û0_c = program_c(nc, "2.8_d_c_$p")
+    local VX, VY, û_c, û0_c = program_c(nc, "2.8_d_c_$p")
+
+    err = compute_error(VX, VY, û_c, u_c)
+    push!(err_arr_c, err)
 
     println("p = $p")
     println("\tû0_b = $û0_b")
     println("\tû0_c = $û0_c")
 end 
+
+println("err_arr_c = $err_arr_c")
+
+println("fit: $(fit(
+    log.(2 .^ (p_arr .+ 1)), 
+    log.(err_arr_c), 1)
+)")

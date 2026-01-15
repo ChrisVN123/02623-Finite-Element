@@ -53,7 +53,17 @@ function dirichlet_bound(noelms1, noelms2)
     return bnodes_dirbc
 end
 
-# ERROR CALCULATIONS 
+function compute_error(VX, VY, û, u)
+    """ 
+    u is a function! 
+    Estimating the error between the solution and the approximation at the nodes
+    Make sure that û[j] matches u(xj, yj)! 
+    """
+    return maximum(
+        abs.(û - u.(VX, VY))
+    )
+end
+
 
 println("EXERCISE 2.7")
 println("CASE 1:")
@@ -95,6 +105,9 @@ display(reshape(û,(noelms1+1, noelms2+1)))
 fig = plot_fem_solution3d(VX,VY,EToV,û)
 save(joinpath(pwd(), "plots/2.7_case1_results.png"), fig)
 
+err_2_7_1 = compute_error(VX, VY, û, u)
+println("E = $err_2_7_1")
+
 VX_analytical, VY_analytical = xy(x0, y0, L1, L2, 1_000, 1_000)
 EToV_analytical = conelmtab(1_000, 1_000)
 fig_analytic = plot_fem_solution3d(VX_analytical, VY_analytical, EToV_analytical, u.(VX_analytical, VY_analytical))
@@ -133,6 +146,9 @@ bnodes_dirbc = dirichlet_bound(noelms1, noelms2)
 A, b = dirbc(bnodes_dirbc, f.(VX, VY), A, b_b)
 
 û = A \ b
+
+err_2_7_2 = compute_error(VX,VY, û, u)
+println("E = $err_2_7_2")
 
 fig = plot_fem_solution3d(VX,VY,EToV,û)
 save(joinpath(pwd(), "plots/2.7_case2_results.png"), fig)
