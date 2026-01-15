@@ -20,7 +20,7 @@ include("Driver28.jl")
 
 # TODO PUT IN YOUR GRROUP NO AND STUDENT IDs FOR THE GROUP HERE
 groupNo = 69  # Put your group no here.
-groupStudentIDs = "<INSERT YOUR STUDENTIDS HERE WITH COMMAS TO SEPARATE THEM>"  # Put your student id's here.
+groupStudentIDs = "s214753, s224397, s201725"  # Put your student id's here.
 
 # PATHS
 cd(@__DIR__)  # change to directory
