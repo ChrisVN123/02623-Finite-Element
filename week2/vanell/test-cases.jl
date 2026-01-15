@@ -132,7 +132,7 @@ x0, y0 = 0, 0
 L1, L2 = 1, 1
 noelms1, noelms2 = 4, 3
 qt = zeros(noelms1 * noelms2 * 2)
-f = ones(noelms1 * noelms2 * 2)
+f_1 = ones(noelms1 * noelms2 * 2)
 lam1, lam2 = 1, 1
 
 VX, VY = xy(x0, y0, L1, L2, noelms1, noelms2)
@@ -141,7 +141,7 @@ display(EToV)
 
 A, b = assembly(VX, VY, EToV, lam1, lam2, qt)
 bnodes = calculate_bnodes(noelms1, noelms2)
-A, b = dirbc(bnodes, f, A, b)
+A, b = dirbc(bnodes, f_1, A, b)
 
 B, d = spdiags(A)
 println("B = ")
