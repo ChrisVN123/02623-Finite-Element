@@ -4,6 +4,8 @@ using LinearAlgebra
 using SparseArrays
 using Random
 using Polynomials
+using Pkg
+Pkg.add("GLMakie")
 
 include("exercise2_1.jl")
 include("exercise2_2.jl")
@@ -36,43 +38,63 @@ EToV = conelmtab(noelms1, noelms2)
 u(x, y) = 3 * x + 5 * y - 7
 f(x, y) = u(x, y)
 q̃(x, y) = 0 
+u_x(x, y) = 3
+u_y(x, y) = 5
 
-A, b = assembly(VX, VY, EToV, lam1, lam2, q.(VX, VY))
-bnodes = calculate_bnodes(noelms1, noelms2)
+A, b = assembly(VX, VY, EToV, lam1, lam2, q̃.(VX, VY))
 
-CB = ConstructBeds(VX, VY, EToV, "")
+function boundary_edge_pairs(VX, VY, EToV, x0, y0, L1, L2; tol=1e-10)
+    left = Tuple{Int, Int}[]
+    bottom = Tuple{Int, Int}[]
+    right = Tuple{Int, Int}[]
+    top = Tuple{Int, Int}[]
+    x_left = x0
+    x_right = x0 + L1
+    y_bottom = y0
+    y_top = y0 + L2
 
-Γ1 = Matrix{Int}(undef, noelms1+noelms2, 2)
-Γ2 = Matrix{Int}(undef, noelms1+noelms2, 2)
+    for n in 1:size(EToV, 1)
+        for r in 1:3
+            s = r == 1 ? 2 : r == 2 ? 3 : 1
+            i, j = EToV[n, r], EToV[n, s]
+            xi, yi = VX[i], VY[i]
+            xj, yj = VX[j], VY[j]
 
-k1 = 1
-k2 = 1
+            if abs(xi - x_left) <= tol && abs(xj - x_left) <= tol
+                push!(left, (n, r))
+            elseif abs(xi - x_right) <= tol && abs(xj - x_right) <= tol
+                push!(right, (n, r))
+            elseif abs(yi - y_bottom) <= tol && abs(yj - y_bottom) <= tol
+                push!(bottom, (n, r))
+            elseif abs(yi - y_top) <= tol && abs(yj - y_top) <= tol
+                push!(top, (n, r))
+            end
+        end
+    end
 
-for (i, v) in enumerate(CB[:,1])
-    #println("i, v = $i, $v")
-    if v % 2 == 0 
-        #println(v, v % 2) 
-        # push!(Γ1, v)
-        Γ1[k1, 1] = v
-        Γ1[k1, 2] = CB[i, 2]
-        global k1 += 1
-    elseif v % 2 == 1 
-        # push!(Γ2, v)
-        Γ2[k2, 1] = v
-        Γ2[k2, 2] = CB[i, 2]
-        global k2 += 1
-    end 
-end 
+    return left, bottom, right, top
+end
 
+function pairs_to_matrix(pairs)
+    out = Matrix{Int}(undef, length(pairs), 2)
+    for (idx, pair) in enumerate(pairs)
+        out[idx, 1] = pair[1]
+        out[idx, 2] = pair[2]
+    end
+    return out
+end
+
+left_pairs, bottom_pairs, _, _ = boundary_edge_pairs(VX, VY, EToV, x0, y0, L1, L2)
+beds_left = pairs_to_matrix(left_pairs)
+beds_bottom = pairs_to_matrix(bottom_pairs)
 
 q_l(x, y) = -u_x(x, y)
 q_b(x, y) = -u_y(x, y)
 
 println("b = $b")
-println("gamma = $Γ1")
-b_l = neubc(VX, VY, EToV, Γ1[1:3,:], q_l, b)
+b_l = neubc(VX, VY, EToV, beds_left, q_l, b)
 println("b_l = $b_l")
-b_b = neubc(VX, VY, EToV, Γ1[4:end,:], q_b, b_l) # maybe! 
+b_b = neubc(VX, VY, EToV, beds_bottom, q_b, b_l)
 
 println("b_b = $b_b")
 
