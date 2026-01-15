@@ -5,7 +5,6 @@ using SparseArrays
 using Random
 using Polynomials
 using Pkg
-Pkg.add("GLMakie")
 
 include("exercise2_1.jl")
 include("exercise2_2.jl")
@@ -88,8 +87,8 @@ left_pairs, bottom_pairs, _, _ = boundary_edge_pairs(VX, VY, EToV, x0, y0, L1, L
 beds_left = pairs_to_matrix(left_pairs)
 beds_bottom = pairs_to_matrix(bottom_pairs)
 
-q_l(x, y) = -u_x(x, y)
-q_b(x, y) = -u_y(x, y)
+q_l(x, y) = u_x(x, y)
+q_b(x, y) = u_y(x, y)
 
 println("b = $b")
 b_l = neubc(VX, VY, EToV, beds_left, q_l, b)
@@ -107,7 +106,7 @@ println("b_dbc = $bnodes_dirbc")
 A, b = dirbc(bnodes_dirbc, f.(VX, VY), A, b_b)
 û = A \ b
 fig = plot_fem_solution3d(VX,VY,EToV,û)
-save(joinpath(pwd(), "plots/2.7_results.png"), fig)
+save(joinpath(pwd(), "plots/2.7_results_new.png"), fig)
 print(b)
 
 @time VX_analytical, VY_analytical = xy(x0, y0, L1, L2, 1_000, 1_000)
