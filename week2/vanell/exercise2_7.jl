@@ -57,7 +57,6 @@ function compute_error(VX, VY, û, u)
     """ 
     u is a function! 
     Estimating the error between the solution and the approximation at the nodes
-    Make sure that û[j] matches u(xj, yj)! 
     """
     return maximum(
         abs.(û - u.(VX, VY))

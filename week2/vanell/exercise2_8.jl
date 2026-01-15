@@ -26,7 +26,6 @@ function program_b(n, name)
     EToV = conelmtab(noelms1, noelms2)
 
     f(x, y) = cos(pi * x) * cos(pi * y) # u(x, y) = f(x, y), (x, y) ∈ Γ2
-    # confirm! 
     u_x(x, y) = 0
     u_y(x, y) = 0
     q̃(x, y) = 2 * pi^2 * cos(pi * x) * cos(pi * y)
@@ -47,6 +46,7 @@ function program_b(n, name)
     bnodes_dirbc = dirichlet_bound(noelms1, noelms2)
     A, b = dirbc(bnodes_dirbc, f.(VX, VY), A, b_b)
 
+    # SOLUTION
     û = A \ b
 
     fig = plot_fem_solution3d(VX, VY, EToV, û)
@@ -78,6 +78,7 @@ function program_c(n, name)
     bnodes_dirbc = dirichlet_bound(noelms1, noelms2)
     A, b = dirbc(bnodes_dirbc, f.(VX, VY), A, b)
 
+    # SOLUTION
     û = A \ b
 
     fig = plot_fem_solution3d(VX, VY, EToV, û)
@@ -89,7 +90,7 @@ end
 program_c(6, "2.8_c_results")
 
 println("d)")
-p_arr = collect(1:6)
+p_arr = collect(1:5)
 err_arr_c = []
 u_c(x, y) = cos(pi * x) * cos(pi * y)
 

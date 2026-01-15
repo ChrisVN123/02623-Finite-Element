@@ -10,9 +10,6 @@ include("exercise2_2.jl")
 include("exercise2_3.jl")
 
 function calculate_bnodes(noelms1, noelms2)
-    """
-    Should work, please confirm 
-    """
     bnodes = []
     for i ∈ 0:noelms1, j ∈ 0:noelms2
         if (i == 0 || i == noelms1 || j == 0 || j == noelms2)

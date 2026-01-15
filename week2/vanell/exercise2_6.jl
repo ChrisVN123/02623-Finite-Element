@@ -77,10 +77,8 @@ function neubc(VX, VY, EToV, beds, q, b)
     """
     q is a function 
     """
-    # println("b_input $b")
     E1 = size(beds)[1]
     for p ∈ 1:E1 
-        # println("p, $p")
         n, r = beds[p, 1], beds[p, 2]
 
         if r == 1 
@@ -95,7 +93,6 @@ function neubc(VX, VY, EToV, beds, q, b)
         xi, yi = VX[i], VY[i]
         xj, yj = VX[j], VY[j]
 
-        # q_midpoint = q[p] # discuss! 
         xc, yc = (xi + xj) / 2, (yi + yj) / 2 
         q_midpoint = q(xc, yc)
 

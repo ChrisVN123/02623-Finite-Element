@@ -11,9 +11,6 @@ include("exercise2_2.jl")
 function assembly(VX, VY, EToV, lam1, lam2, qt)
     """
     Algorithm 4 
-    
-    SHOULD BE SPARSE 
-    Smart way? 
     """
     
     N = size(EToV)[1]
