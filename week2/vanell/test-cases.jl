@@ -257,7 +257,7 @@ save(joinpath(pwd(), "plots/2.5_case2_analytical.png"), fig_analytic)
 
 
 
-println("EXERCISE 2.7")
+println("\nEXERCISE 2.7")
 println("CASE 1:")
 x0, y0 = -2.5, -4.8
 L1, L2 = 7.6, 5.9 
