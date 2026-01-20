@@ -2,7 +2,7 @@ using GLMakie
 import Makie
 
 function plotting_path_3d(EToV, solution, cols::Int, start_node::Int;
-                          filename::Union{Nothing,String} = "maze_3d.png",
+                          filename::Union{Nothing,String} = "maze",
                           tol::Float64 = 1e-12,
                           zscale::Float64 = 1.0)
 
@@ -55,13 +55,13 @@ function plotting_path_3d(EToV, solution, cols::Int, start_node::Int;
     )
 
     Makie.surface!(ax, xgrid, ygrid, permutedims(Z))
-    Makie.scatter!(ax, xs, ys, zscale .* u; markersize=10)
+    #Makie.scatter!(ax, xs, ys, zscale .* u; markersize=10)
 
     if length(path) > 1
-        path_pts = GLMakie.Point3f.([xs[i] for i in path],
-                                    [ys[i] for i in path],
-                                    zscale .* [u[i] for i in path])
-        Makie.lines!(ax, path_pts; linewidth=4, color=:red)
+        #path_pts = GLMakie.Point3f.([xs[i] for i in path],
+        #                            [ys[i] for i in path],
+        #                            zscale .* [u[i] for i in path])
+        #Makie.lines!(ax, path_pts; linewidth=4, color=:red)
     end
 
     Makie.xlims!(ax, 0.5, cols + 0.5)
@@ -70,7 +70,7 @@ function plotting_path_3d(EToV, solution, cols::Int, start_node::Int;
     # Optional: choose a nicer default view
     # ax.azimuth[] = -pi/2
     # ax.elevation[] =  pi/6
-
+    filename = "$(filename)_3D_cols_$(cols).png"
     if filename !== nothing
         Makie.save(filename, fig)
     end
@@ -82,7 +82,7 @@ using GLMakie
 import Makie
 
 function plotting_path_3d_4views(EToV, solution, cols::Int, start_node::Int;
-                                 filename::Union{Nothing,String} = "maze_3d_4views.png",
+                                 filename::Union{Nothing,String} = "maze",
                                  tol::Float64 = 1e-12,
                                  zscale::Float64 = 1.0,
                                  markersize::Float64 = 10.0)
@@ -149,7 +149,7 @@ function plotting_path_3d_4views(EToV, solution, cols::Int, start_node::Int;
         )
 
         Makie.surface!(ax, xgrid, ygrid, permutedims(Z))
-        Makie.scatter!(ax, xs, ys, zscale .* u; markersize=markersize)
+        #Makie.scatter!(ax, xs, ys, zscale .* u; markersize=markersize)
 
         if length(path) > 1
             path_pts = GLMakie.Point3f.([xs[i] for i in path],
@@ -165,9 +165,11 @@ function plotting_path_3d_4views(EToV, solution, cols::Int, start_node::Int;
         ax.elevation[] = views[k][2]
     end
 
+    filename = "$(filename)_3D_4views_cols_$(cols).png"
     if filename !== nothing
         Makie.save(filename, fig)
     end
+    
 
     return fig, path
 end

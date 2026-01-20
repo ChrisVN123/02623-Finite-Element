@@ -1,7 +1,7 @@
 using CairoMakie
 
 function plotting_path(EToV, solution, cols::Int, start_node::Int;
-                       filename::Union{Nothing,String} = "maze_path.png",
+                       filename::Union{Nothing,String} = "maze_2d",
                        tol::Float64 = 1e-12,
                        draw_walls::Bool = true,
                        wall_lw::Float64 = 6.0)
@@ -54,8 +54,6 @@ function plotting_path(EToV, solution, cols::Int, start_node::Int;
     fig = Figure(size=(1000, 700))
     ax = Axis(fig[1, 1];
         aspect = DataAspect(),
-        xticks = 1:cols,
-        yticks = 1:rows,
         title = "Greedy downhill path (min-u neighbor each step)"
     )
 
@@ -106,7 +104,7 @@ function plotting_path(EToV, solution, cols::Int, start_node::Int;
     # all edges (light) - corridors (optional; comment out if you only want walls)
     for e in EToV
         a, b = e[1], e[2]
-        lines!(ax, [xs[a], xs[b]], [ys[a], ys[b]], linewidth=2, color=:gray70)
+        #lines!(ax, [xs[a], xs[b]], [ys[a], ys[b]], linewidth=2, color=:gray70)
     end
 
     # path edges (highlight)
@@ -118,13 +116,14 @@ function plotting_path(EToV, solution, cols::Int, start_node::Int;
     end
 
     # nodes
-    CairoMakie.scatter!(ax, xs, ys, markersize=14, color=:dodgerblue)
+    #CairoMakie.scatter!(ax, xs, ys, markersize=14, color=:dodgerblue)
 
     # (REMOVED) labels: node id and u-value
     # text!(...)  <-- gone
 
     CairoMakie.xlims!(ax, 0.5, cols + 0.5)
     CairoMakie.ylims!(ax, 0.5, rows + 0.5)
+    filename = "$(filename)_cols_$(cols).png"
 
     if filename !== nothing
         save(filename, fig)
