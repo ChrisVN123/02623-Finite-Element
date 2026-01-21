@@ -1,6 +1,6 @@
 using CairoMakie
 
-function plotting_path(EToV, solution, cols::Int, start_node::Int;
+function plotting_path2d(EToV, solution, cols::Int, start_node::Int;
                        filename::Union{Nothing,String} = "images/maze_2d",
                        tol::Float64 = 1e-12,
                        draw_walls::Bool = true,
@@ -104,10 +104,10 @@ function plotting_path(EToV, solution, cols::Int, start_node::Int;
     # all edges (light) - corridors (optional; comment out if you only want walls)
     for e in EToV
         a, b = e[1], e[2]
-        #lines!(ax, [xs[a], xs[b]], [ys[a], ys[b]], linewidth=2, color=:gray70)
+        lines!(ax, [xs[a], xs[b]], [ys[a], ys[b]], linewidth=2, color=:red)
     end
 
-    # path edges (highlight)
+    # path edges (highlight with thicker red)
     if length(path) > 1
         for k in 1:(length(path)-1)
             a, b = path[k], path[k+1]
@@ -116,10 +116,11 @@ function plotting_path(EToV, solution, cols::Int, start_node::Int;
     end
 
     # nodes
-    #CairoMakie.scatter!(ax, xs, ys, markersize=14, color=:dodgerblue)
+    CairoMakie.scatter!(ax, xs, ys, markersize=14, color=:dodgerblue)
 
-    # (REMOVED) labels: node id and u-value
-    # text!(...)  <-- gone
+    # labels: node id and u-value
+    labels = ["$i\n$(round(u[i]; digits=3))" for i in 1:n]
+    text!(ax, labels, position=Point2f.(xs .+ 0.12, ys .+ 0.12), fontsize=10)
 
     CairoMakie.xlims!(ax, 0.5, cols + 0.5)
     CairoMakie.ylims!(ax, 0.5, rows + 0.5)

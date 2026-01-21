@@ -4,64 +4,16 @@ using LinearAlgebra
 using SparseArrays
 using Random
 
-
 include("plotpath_2d.jl")
 include("plotpath_3d.jl")
 include("EToV_50x50_from_image.jl")
+include("plotpath.jl")
 
 ###inputs
-start, stop, elements = 1, 2501, 2501
-cols = 50
+start, stop, elements = 2, 8, 9
+cols = 3
 c = 1
 d = 0
-
-function EToV_radius(nodes::AbstractVector, r::Real)
-    n = length(nodes)
-    r2 = r^2
-    edges = Tuple{Int,Int}[]
-
-    for i in 1:n-1
-        xi, yi = nodes[i]
-        for j in i+1:n
-            xj, yj = nodes[j]
-            if (xi - xj)^2 + (yi - yj)^2 ≤ r2
-                push!(edges, (i, j))
-            end
-        end
-    end
-    return edges
-end
-
-#Nodes = [[0,0], [1,0],[2,0], [1,-1],[1,-2]]
-#EToV = EToV_radius(Nodes, 1.0)
-#EToV = [[1,2],[1,6],[2,3],[3,4],[4,5], [4,9], [5, 10], [6, 11], [7, 8], [7, 12], [8, 13], [9, 14], [9, 10], [10, 15], [11, 12], [11,16], [12, 17], [13, 18], [14, 15], [16, 17], [18, 19], [19, 20]]
-# EToV = EToV = [
-#   [1,2], [2,14], [3,4], [3,15], [4,5], [4,16], [5,6], [6,18],
-#   [7,8], [7,19], [8,9], [8,20], [9,10], [9,21], [10,22], [11,12],
-#   [11,23], [12,24], [13,14], [13,25], [15,27], [16,28], [17,29], [18,30],
-#   [19,31], [20,21], [21,22], [22,23], [23,35], [24,36], [25,37], [26,27],
-#   [26,38], [28,40], [29,41], [30,42], [32,33], [32,44], [33,34], [34,35],
-#   [34,46], [35,36], [35,47], [36,48], [37,38], [37,49], [39,40], [39,51],
-#   [41,53], [42,43], [42,54], [43,44], [43,55], [44,56], [45,57], [46,58],
-#   [47,59], [48,60], [49,50], [50,51], [52,53], [53,54], [53,65], [54,66],
-#   [55,67], [56,68], [57,69], [58,70], [59,60], [60,72], [61,62], [61,73],
-#   [62,63], [63,64], [64,65], [64,76], [66,67], [66,78], [67,68], [69,81],
-#   [70,71], [70,82], [71,72], [71,83], [72,84], [73,85], [74,75], [74,86],
-#   [75,87], [76,77], [77,78], [78,79], [78,90], [79,80], [79,91], [80,81],
-#   [80,92], [81,82], [81,93], [82,83], [82,94], [84,96], [85,86], [86,87],
-#   [86,98], [88,89], [88,100], [89,90], [92,93], [92,104], [93,94], [93,105],
-#   [94,95], [96,108], [97,98], [97,109], [98,110], [99,100], [99,111], [101,102],
-#   [101,113], [102,103], [103,104], [104,105], [104,116], [105,106], [106,107], [107,108],
-#   [107,119], [109,121], [110,122], [111,123], [112,113], [112,124], [113,125], [114,115],
-#   [114,126], [115,116], [115,127], [116,117], [116,128], [117,118], [118,119], [118,130],
-#   [119,120], [119,131], [120,132], [121,133], [122,123], [124,125], [125,126], [125,137],
-#   [126,127], [126,138], [127,128], [127,139], [128,129], [128,140], [129,130], [129,141],
-#   [130,131], [130,142], [132,144], [133,134], [134,135], [135,136], [136,137], [137,138],
-#   [138,139], [140,141], [141,142], [142,143], [143,144]
-# ]
-# #EToV = [[1,2], [2,3], [2,5], [4,5], [4,6], [6,7], [7, 8],[8, 9]]
-# display(EToV)  # [(1, 2), (2,  3), (2, 4)]
-
 
 function assemble_K(EToV, c, d, start, stop, n_elements)
     E = length(EToV)
@@ -82,8 +34,8 @@ function assemble_K(EToV, c, d, start, stop, n_elements)
         push!(I, j); push!(J, i); push!(V, -ke)
     end
     A =  sparse(I, J, V, n_elements, n_elements)
-    
-    println("number of cols: $n_elements")
+
+
     # Algorithm 2
     b[start] = c
     b[stop] = d
@@ -94,13 +46,8 @@ function assemble_K(EToV, c, d, start, stop, n_elements)
     A[start, start] = 1
     A[stop, stop] = 1
     
-    # CRITICAL: Remove explicit zeros to maintain sparsity pattern efficiency
-    A = dropzeros(A)
-    
-    println("nnz after cleanup: $(nnz(A))")
-    println("size of A: $(size(A))")
-    
-    
+    #don't explicity write zeros
+    A = dropzeros(A)    
     return A, b
 end
 
@@ -113,6 +60,7 @@ A,b = (assemble_K(EToV, c, d,  start, stop, elements))
 @time A \ b
 
 @time Array(A) \ b
-#plotting_path(EToV, u, cols, start)
-#plotting_path_3d(EToV, u, cols, start;  zscale = Float64(10))
-#plotting_path_3d_4views(EToV, u, cols, start;  zscale = Float64(10))
+plotting_path2d(EToV, u, cols, start)
+plotting_path_3d(EToV, u, cols, start;  zscale = Float64(10))
+plotting_path_3d_4views(EToV, u, cols, start;  zscale = Float64(10))
+plotting_path(EToV, u, cols, start)

@@ -1,7 +1,7 @@
 using CairoMakie
 
 function plotting_path(EToV, solution, cols::Int, start_node::Int;
-                       filename::Union{Nothing,String} = "maze_path.png",
+                       filename::Union{Nothing,String} = "images/maze_path_old.png",
                        tol::Float64 = 1e-12)
 
     u = collect(solution)               # ensure indexable Vector
