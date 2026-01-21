@@ -2,7 +2,7 @@ using GLMakie
 import Makie
 
 function plotting_path_3d(EToV, solution, cols::Int, start_node::Int;
-                          filename::Union{Nothing,String} = "maze",
+                          filename::Union{Nothing,String} = "images/maze",
                           tol::Float64 = 1e-12,
                           zscale::Float64 = 1.0)
 
@@ -82,7 +82,7 @@ using GLMakie
 import Makie
 
 function plotting_path_3d_4views(EToV, solution, cols::Int, start_node::Int;
-                                 filename::Union{Nothing,String} = "maze",
+                                 filename::Union{Nothing,String} = "images/maze",
                                  tol::Float64 = 1e-12,
                                  zscale::Float64 = 1.0,
                                  markersize::Float64 = 10.0)

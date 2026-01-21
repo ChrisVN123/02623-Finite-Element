@@ -10,7 +10,7 @@ include("plotpath_3d.jl")
 include("EToV_50x50_from_image.jl")
 
 ###inputs
-start, stop, elements = 1, 2475, 2500
+start, stop, elements = 1, 2501, 2501
 cols = 50
 c = 1
 d = 0
@@ -63,7 +63,7 @@ end
 # display(EToV)  # [(1, 2), (2,  3), (2, 4)]
 
 
-function assemble_K(EToV, c, d,start, stop, n_elements)
+function assemble_K(EToV, c, d, start, stop, n_elements)
     E = length(EToV)
     b = zeros(n_elements)
     k = ones(E)
@@ -82,28 +82,37 @@ function assemble_K(EToV, c, d,start, stop, n_elements)
         push!(I, j); push!(J, i); push!(V, -ke)
     end
     A =  sparse(I, J, V, n_elements, n_elements)
+    
+    println("number of cols: $n_elements")
     # Algorithm 2
-    ## NOTE: check if A[1, 2] is efficient
     b[start] = c
     b[stop] = d
     
-    A[start, start:end] .= 0
-    A[start, 1:start] .= 0
-
-    A[stop, stop:end] .= 0
-    A[stop, 1:stop] .= 0
-
+    # Apply boundary conditions
+    A[start, :] .= 0
+    A[stop, :] .= 0
     A[start, start] = 1
     A[stop, stop] = 1
-
-
-    # Version 1
-    return A, b, A \ b
+    
+    # CRITICAL: Remove explicit zeros to maintain sparsity pattern efficiency
+    A = dropzeros(A)
+    
+    println("nnz after cleanup: $(nnz(A))")
+    println("size of A: $(size(A))")
+    
+    
+    return A, b
 end
 
-bfs_adj =  bfs(EToV)
-print(bfs_adj)
+#bfs_adj =  bfs(EToV)
+#print(bfs_adj)
 
-A,b,u = collect(assemble_K(EToV, c, d,  start, stop, elements))
+A,b = (assemble_K(EToV, c, d,  start, stop, elements))
+@time u = A \ b
 
-plotting_path(EToV, u, Int(sqrt(elements)),start)
+@time A \ b
+
+@time Array(A) \ b
+#plotting_path(EToV, u, cols, start)
+#plotting_path_3d(EToV, u, cols, start;  zscale = Float64(10))
+#plotting_path_3d_4views(EToV, u, cols, start;  zscale = Float64(10))

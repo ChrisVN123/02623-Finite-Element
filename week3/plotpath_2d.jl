@@ -1,7 +1,7 @@
 using CairoMakie
 
 function plotting_path(EToV, solution, cols::Int, start_node::Int;
-                       filename::Union{Nothing,String} = "maze_2d",
+                       filename::Union{Nothing,String} = "images/maze_2d",
                        tol::Float64 = 1e-12,
                        draw_walls::Bool = true,
                        wall_lw::Float64 = 6.0)
