@@ -10,15 +10,14 @@ include("EToV_50x50_from_image.jl")
 include("plotpath.jl")
 
 ###inputs
-start, stop, elements = 2, 8, 9
-cols = 3
+start, stop, elements = 25, 2476, 2500
+cols = 50
 c = 1
 d = 0
 
 function assemble_K(EToV, c, d, start, stop, n_elements)
     E = length(EToV)
     b = zeros(n_elements)
-    k = ones(E)
 
     I = Int[]
     J = Int[]
@@ -26,12 +25,11 @@ function assemble_K(EToV, c, d, start, stop, n_elements)
 
     for e in 1:E
         i, j = EToV[e]
-        ke = float(k[e])
 
-        push!(I, i); push!(J, i); push!(V,  ke)
-        push!(I, j); push!(J, j); push!(V,  ke)
-        push!(I, i); push!(J, j); push!(V, -ke)
-        push!(I, j); push!(J, i); push!(V, -ke)
+        push!(I, i); push!(J, i); push!(V,  1)
+        push!(I, j); push!(J, j); push!(V,  1)
+        push!(I, i); push!(J, j); push!(V, -1)
+        push!(I, j); push!(J, i); push!(V, -1)
     end
     A =  sparse(I, J, V, n_elements, n_elements)
 
@@ -51,12 +49,8 @@ function assemble_K(EToV, c, d, start, stop, n_elements)
     return A, b
 end
 
-#bfs_adj =  bfs(EToV)
-#print(bfs_adj)
-
 A,b = (assemble_K(EToV, c, d,  start, stop, elements))
 @time u = A \ b
-
 @time A \ b
 
 @time Array(A) \ b
