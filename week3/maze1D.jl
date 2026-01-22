@@ -27,6 +27,16 @@ d = 0
 #     [8, 9]
 # ]
 
+function CO2eq_calculations(CPUtime)
+    # PARAMETERS FOR SUUSTAINABILITY CALCULATION
+    CO2intensity = 0.100  # [kg CO2/kWh], https://communitiesforfuture.org/collaborate/electricity-map/
+    PowerEstimate = 60  # [kW]
+
+    CO2eq = CPUtime / 3600 * PowerEstimate / 1000 * CO2intensity
+
+    return CO2eq
+end
+
 function assemble_K(EToV, c, d, start, stop, n_elements)
     E = length(EToV)
     b = zeros(n_elements)
@@ -59,6 +69,7 @@ function assemble_K(EToV, c, d, start, stop, n_elements)
     A = dropzeros(A)    
     return A, b, A \ b 
 end
+# First compilation 
 assemble_K(EToV, c, d,  start, stop, elements)
 
 # A,b = (assemble_K(EToV, c, d,  start, stop, elements))
@@ -71,39 +82,44 @@ assemble_K(EToV, c, d,  start, stop, elements)
 # plotting_path_3d_4views(EToV, u, cols, start;  zscale = Float64(10))
 # plotting_path(EToV, u, cols, start)
 
-rows, cols = 5, 4
-EToV = maze_EToV(rows, cols; seed=42, braid=0.05)   # braid optional
+CPUtime_list = []
+n_list = 3:15
+for n ∈ n_list 
+    rows, cols = n, n 
+    EToV = maze_EToV(rows, cols; seed=42, braid=0.05)   # braid optional
+    
+    elements = rows * cols
+    start = 1
+    stop  = rows * cols 
+    c, d = 1, 0
 
-elements = rows * cols
-start = 1
-stop  = 20
-c, d = 1, 0
+    A, b, u = assemble_K(EToV, c, d, start, stop, elements)
 
-A, b, u = assemble_K(EToV, c, d, start, stop, elements)
-
-println("Timing of assemble_K including solving the system")
-@time A, b, u = assemble_K(EToV, c, d, start, stop, elements)
-
-# Proper timing 
-total_time = 0.0 
-fac = 10 
-for i ∈ 1:fac
-    t = @elapsed begin 
-        assemble_K(EToV, c, d, start, stop, elements)
+    total_time = 0.0 
+    fac = 10 
+    for i ∈ 1:fac 
+        t = @elapsed begin 
+            assemble_K(EToV, c, d, start, stop, elements)
+        end 
+        total_time += t 
     end 
-    global total_time += t 
+    CPUtime = total_time / fac 
+    push!(CPUtime_list, CPUtime)
+    
+    plotting_path2d(EToV, u, cols, start)
+    plotting_path_3d(EToV, u, cols, start; zscale=10.0)
+    plotting_path_3d_4views(EToV, u, cols, start; zscale=10.0)
+    plotting_path(EToV, u, cols, start)
 end 
-CPUtime = total_time / fac 
-println("Averaged time: $CPUtime")
 
-# PARAMETERS FOR SUUSTAINABILITY CALCULATION
-CO2intensity = 0.100  # [kg CO2/kWh], https://communitiesforfuture.org/collaborate/electricity-map/
-PowerEstimate = 60  # [kW]
+CO2eq_list = CO2eq_calculations.(CPUtime_list)
+println("CPUtime_list = $CPUtime_list")
+println("CO2eq = $CO2eq_list")
 
-CO2eq = CPUtime / 3600 * PowerEstimate / 1000 * CO2intensity
-println("CO2eq = $CO2eq")
+Plots.plot(n_list, CPUtime_list)
+Plots.title!("CPU time vs n × n maze")
+Plots.savefig("CPUtime.png")
 
-plotting_path2d(EToV, u, cols, start)
-plotting_path_3d(EToV, u, cols, start; zscale=10.0)
-plotting_path_3d_4views(EToV, u, cols, start; zscale=10.0)
-plotting_path(EToV, u, cols, start)
+Plots.plot(n_list, CO2eq_list)
+Plots.title!("CO2eq vs n × n maze")
+Plots.savefig("CO2eq.png")
