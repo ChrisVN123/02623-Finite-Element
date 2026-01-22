@@ -10,11 +10,22 @@ include("EToV_50x50_from_image.jl")
 include("plotpath.jl")
 include("create_maze_EToV.jl")
 
-###inputs
+### Inputs
 start, stop, elements = 25, 2476, 2500
 cols = 50
 c = 1
 d = 0
+
+# start, stop, elements = 2, 8, 9 
+# EToV = [
+#     [1, 2], 
+#     [2, 3], [2, 5], 
+#     [4, 5], [4, 7], 
+#     [5, 6], 
+#     [6, 9], 
+#     [7, 8], 
+#     [8, 9]
+# ]
 
 function assemble_K(EToV, c, d, start, stop, n_elements)
     E = length(EToV)
@@ -32,8 +43,7 @@ function assemble_K(EToV, c, d, start, stop, n_elements)
         push!(I, i); push!(J, j); push!(V, -1)
         push!(I, j); push!(J, i); push!(V, -1)
     end
-    A =  sparse(I, J, V, n_elements, n_elements)
-
+    A = sparse(I, J, V, n_elements, n_elements)
 
     # Algorithm 2
     b[start] = c
@@ -47,8 +57,9 @@ function assemble_K(EToV, c, d, start, stop, n_elements)
     
     #don't explicity write zeros
     A = dropzeros(A)    
-    return A, b
+    return A, b, A \ b 
 end
+assemble_K(EToV, c, d,  start, stop, elements)
 
 # A,b = (assemble_K(EToV, c, d,  start, stop, elements))
 # @time u = A \ b
@@ -68,9 +79,29 @@ start = 1
 stop  = 20
 c, d = 1, 0
 
-A, b = assemble_K(EToV, c, d, start, stop, elements)
+A, b, u = assemble_K(EToV, c, d, start, stop, elements)
 
-u = A \ b
+println("Timing of assemble_K including solving the system")
+@time A, b, u = assemble_K(EToV, c, d, start, stop, elements)
+
+# Proper timing 
+total_time = 0.0 
+fac = 10 
+for i ∈ 1:fac
+    t = @elapsed begin 
+        assemble_K(EToV, c, d, start, stop, elements)
+    end 
+    global total_time += t 
+end 
+CPUtime = total_time / fac 
+println("Averaged time: $CPUtime")
+
+# PARAMETERS FOR SUUSTAINABILITY CALCULATION
+CO2intensity = 0.100  # [kg CO2/kWh], https://communitiesforfuture.org/collaborate/electricity-map/
+PowerEstimate = 60  # [kW]
+
+CO2eq = CPUtime / 3600 * PowerEstimate / 1000 * CO2intensity
+println("CO2eq = $CO2eq")
 
 plotting_path2d(EToV, u, cols, start)
 plotting_path_3d(EToV, u, cols, start; zscale=10.0)
